@@ -1,0 +1,402 @@
+У меня есть три  файла в приложении, отвечающие за веб интерфейс, которые получают данные из базы данных
+
+referal-dashboard.ejs:
+
+
+<!-- <h2>Реферальный дашборд для <%- referal.referal_nickname %> (<%- referal.referal_id %>)</h2> -->
+
+<div class="dashboard-container">
+	<!-- <div class="info-section">
+		<h3>Информация о реферале:</h3>
+		<ul class="referal-info">
+			<li><strong>ID:</strong> <%- referal.referal_id %></li>
+			<li><strong>Никнейм:</strong> <%- referal.referal_nickname %></li>
+			<li><strong>Имя:</strong> <%- referal.referal_name %></li>
+			<li><strong>Дата регистрации:</strong> <%- new Date(referal.reg_date).toLocaleDateString() %></li>
+			<li><strong>Referer ID:</strong> <%- referal.referer_id %></li>
+			<li><strong>Реферальная ссылка:</strong> <%- referal.referral_link_url %></li>
+			<li><strong>Личный канал:</strong> <%- referal.personal_channel_link %></li>
+			<li><strong>UTM:</strong> <%- referal.utm %></li>
+		</ul>
+	</div> -->
+
+	<!-- <h3>Реферальное дерево:</h3> -->
+	<% if (referalTree && referalTree.length> 0) { %>
+		<div class="table-container">
+			<table class="referal-table">
+				<thead>
+					<tr>
+						<th>Рефералы</th>
+						<th>ID</th>
+						<th>Никнейм</th>
+						<th>Имя</th>
+						<th>Дата регистрации</th>
+						<th>Referer ID</th>
+						<th>Реферальная ссылка</th>
+						<th>Личный канал</th>
+						<th>UTM</th>
+						<th>Уровень</th>
+					</tr>
+				</thead>
+				<tbody>
+					<% function countTotalReferrals(node) { let count=(node.children && node.children.length) || 0; if
+						(node.children) { node.children.forEach(child=> {
+						count += countTotalReferrals(child);
+						});
+						}
+						return count;
+						} %>
+
+						<% function displayReferalTree(tree, level, parentReferalId) { tree.forEach(referal=> {
+							const totalReferrals = countTotalReferrals(referal);
+							%>
+							<tr class="referal-row level-<%= level %> <%= level > 1 ? 'collapsed' : '' %>"
+								data-referal-id="<%- referal.referal_id %>" data-referer-id="<%- parentReferalId %>"
+								data-level="<%- level %>">
+								<td class="tree-cell">
+									<div class="tree-content" style="--level: <%- level - 1 %>">
+										<div class="tree-line-container">
+											<% if (totalReferrals> 0) { %>
+												<div class="tree-line"></div>
+												<button class="toggle-button" title="Развернуть/Свернуть">+</button>
+												<span class="referrals-count">
+													<%= totalReferrals %>
+												</span>
+												<% } %>
+										</div>
+									</div>
+								</td>
+								<td><%- referal.referal_id %></td>
+								<td><%- referal.referal_nickname %></td>
+								<td><%- referal.referal_name %></td>
+								<td><%- new Date(referal.reg_date).toLocaleDateString() %></td>
+								<td><%- referal.referer_id %></td>
+								<td class="url-cell" title="<%- referal.referral_link_url %>">
+									<%- referal.referral_link_url %>
+								</td>
+								<td><%- referal.personal_channel_link %></td>
+								<td><%- referal.utm %></td>
+								<td class="level-cell"><%- level %></td>
+							</tr>
+							<% if (referal.children && referal.children.length> 0) {
+								displayReferalTree(referal.children, level + 1, referal.referal_id);
+								} %>
+								<% }); } %>
+
+									<% displayReferalTree(referalTree, 1, null); %>
+				</tbody>
+			</table>
+		</div>
+		<% } else { %>
+			<p class="no-referals">В вашей реферальной сети пока нет рефералов.</p>
+			<% } %>
+</div>
+
+Второй файл script.js: 
+
+document.addEventListener('DOMContentLoaded', () => {
+	const table = document.querySelector('.referal-table');
+
+	// Функция для обновления высоты линий всех родительских элементов
+	function updateParentLines(row) {
+		let currentRow = row;
+		while (currentRow) {
+			const refererId = currentRow.dataset.refererId;
+			if (!refererId) break;
+
+			const parentRow = table.querySelector(`tr[data-referal-id="${refererId}"]`);
+			if (parentRow) {
+				updateTreeLines(parentRow, true);
+			}
+			currentRow = parentRow;
+		}
+	}
+
+	// Обновленная функция для расчета высоты линий
+	function updateTreeLines(row, isExpanding) {
+		const referalId = row.dataset.referalId;
+
+		// Рекурсивная функция для получения всех видимых потомков
+		function getAllVisibleChildren(parentId) {
+			const directChildren = Array.from(table.querySelectorAll(`tr[data-referer-id="${parentId}"]`));
+			let allChildren = [...directChildren];
+
+			directChildren.forEach(child => {
+				if (!child.classList.contains('collapsed') && child.querySelector('.toggle-button')?.textContent === '-') {
+					allChildren = allChildren.concat(getAllVisibleChildren(child.dataset.referalId));
+				}
+			});
+
+			return allChildren;
+		}
+
+		const visibleChildren = getAllVisibleChildren(referalId);
+
+		if (visibleChildren.length === 0) return;
+
+		if (isExpanding) {
+			row.classList.add('expanded-branch');
+
+			// Находим последнего видимого потомка
+			const lastChild = visibleChildren[visibleChildren.length - 1];
+
+			// Обновляем классы для правильного отображения линий
+			visibleChildren.forEach(child => child.classList.remove('last-in-branch'));
+			lastChild.classList.add('last-in-branch');
+
+			// Устанавливаем высоту линии
+			const treeLineElement = row.querySelector('.tree-line');
+			if (treeLineElement) {
+				const totalHeight = visibleChildren
+					.filter(child => !child.classList.contains('collapsed'))
+					.reduce((height, child) => height + child.offsetHeight, 0);
+				treeLineElement.style.height = `${totalHeight}px`;
+			}
+		} else {
+			row.classList.remove('expanded-branch');
+			visibleChildren.forEach(child => {
+				child.classList.remove('expanded-branch', 'last-in-branch');
+			});
+		}
+	}
+
+	table.addEventListener('click', (e) => {
+		const toggleButton = e.target.closest('.toggle-button');
+		if (!toggleButton) return;
+
+		const row = toggleButton.closest('tr');
+		const referalId = row.dataset.referalId;
+		const isExpanding = toggleButton.textContent === '+';
+
+		const children = table.querySelectorAll(`tr[data-referer-id="${referalId}"]`);
+
+		if (isExpanding) {
+			children.forEach(child => {
+				child.classList.remove('collapsed');
+			});
+			toggleButton.textContent = '-';
+			updateTreeLines(row, true);
+			// Обновляем линии всех родительских элементов
+			updateParentLines(row);
+		} else {
+			const hideChildren = (parentId) => {
+				const childRows = table.querySelectorAll(`tr[data-referer-id="${parentId}"]`);
+				childRows.forEach(child => {
+					child.classList.add('collapsed');
+					child.classList.remove('expanded-branch', 'last-in-branch');
+					const childButton = child.querySelector('.toggle-button');
+					if (childButton) {
+						childButton.textContent = '+';
+						hideChildren(child.dataset.referalId);
+					}
+				});
+			};
+			hideChildren(referalId);
+			toggleButton.textContent = '+';
+			row.classList.remove('expanded-branch');
+			// Обновляем линии всех родительских элементов
+			updateParentLines(row);
+		}
+	});
+
+	// Инициализация линий при загрузке страницы
+	const expandedButtons = table.querySelectorAll('.toggle-button');
+	expandedButtons.forEach(button => {
+		if (button.textContent === '-') {
+			updateTreeLines(button.closest('tr'), true);
+		}
+	});
+});
+
+Третий файл style.css:
+
+/* public/css/style.css */
+
+.dashboard-container {
+	padding: 20px;
+	max-width: 100%;
+}
+
+.info-section {
+	background: #f8f9fa;
+	padding: 20px;
+	border-radius: 8px;
+	margin-bottom: 30px;
+}
+
+.referal-info {
+	list-style: none;
+	padding: 0;
+}
+
+.referal-info li {
+	margin-bottom: 10px;
+}
+
+.table-container {
+	overflow-x: auto;
+}
+
+.referal-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 20px 0;
+	font-size: 14px;
+}
+
+.referal-table th,
+.referal-table td {
+	padding: 12px 8px;
+	border: 1px solid #ddd;
+	text-align: left;
+}
+
+.referal-table th {
+	background-color: #f2f2f2;
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+
+.tree-cell {
+	white-space: nowrap;
+}
+
+.tree-content {
+	display: flex;
+	align-items: center;
+	padding-left: calc(var(--level, 0) * 24px);
+	position: relative;
+}
+
+.tree-line-container {
+	display: flex;
+	align-items: center;
+	position: relative;
+}
+
+.tree-line {
+	position: absolute;
+	left: 11px;
+	/* Центрирование относительно кнопки */
+	top: 24px;
+	/* Начало от нижней части кнопки */
+	width: 2px;
+	background-color: #ddd;
+	display: none;
+	/* По умолчанию скрыта */
+}
+
+/* Добавляем точку в конце линии */
+.tree-line::after {
+	content: '';
+	position: absolute;
+	bottom: -4px;
+	left: -2px;
+	width: 6px;
+	height: 6px;
+	background-color: #ddd;
+	border-radius: 50%;
+}
+
+/* Горизонтальная линия перед кнопкой */
+.tree-content::before {
+	content: '';
+	position: absolute;
+	left: calc(var(--level, 0) * 24px);
+	width: 24px;
+	height: 2px;
+	background-color: #ddd;
+	display: var(--show-line, none);
+}
+
+.toggle-button {
+	cursor: pointer;
+	width: 24px;
+	height: 24px;
+	border: 1px solid #ddd;
+	background: #fff;
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-right: 8px;
+	transition: background-color 0.2s;
+	position: relative;
+	z-index: 2;
+	user-select: none;
+	/* Запрещаем выделение текста */
+}
+
+.referrals-count {
+	background: #e3f2fd;
+	color: #1976d2;
+	padding: 2px 8px;
+	border-radius: 12px;
+	font-size: 12px;
+}
+
+.url-cell {
+	max-width: 200px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.level-cell {
+	text-align: center;
+}
+
+.collapsed {
+	display: none;
+}
+
+.level-1 {
+	background-color: #ffffff;
+}
+
+.level-2 {
+	background-color: #fafafa;
+}
+
+.level-3 {
+	background-color: #f5f5f5;
+}
+
+.level-4 {
+	background-color: #f0f0f0;
+}
+
+.referal-row:hover {
+	background-color: #f8f9fa;
+}
+
+.no-referals {
+	text-align: center;
+	padding: 40px;
+	background: #f8f9fa;
+	border-radius: 8px;
+	color: #666;
+}
+
+
+/* Стили для открытых веток */
+.expanded-branch .tree-line {
+	display: block;
+	height: calc(100% + 1px);
+	/* +1px для перекрытия границы ячейки */
+}
+
+/* Стили для последней строки в группе */
+.last-in-branch .tree-line {
+	height: 50%;
+}
+
+/* Добавляем стиль для активной ветки */
+.active-branch .tree-line {
+	background-color: #b0b0b0;
+}
+
+.active-branch .tree-line::after {
+	background-color: #b0b0b0;
+}

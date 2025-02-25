@@ -1,0 +1,190 @@
+/* public/css/style.css */
+
+.dashboard-container {
+	padding: 20px;
+	max-width: 100%;
+}
+
+.info-section {
+	background: #f8f9fa;
+	padding: 20px;
+	border-radius: 8px;
+	margin-bottom: 30px;
+}
+
+.referal-info {
+	list-style: none;
+	padding: 0;
+}
+
+.referal-info li {
+	margin-bottom: 10px;
+}
+
+.table-container {
+	overflow-x: auto;
+}
+
+.referal-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 20px 0;
+	font-size: 14px;
+}
+
+.referal-table th,
+.referal-table td {
+	padding: 12px 8px;
+	border: 1px solid #ddd;
+	text-align: left;
+}
+
+.referal-table th {
+	background-color: #f2f2f2;
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+
+.tree-cell {
+	white-space: nowrap;
+}
+
+.tree-content {
+	display: flex;
+	align-items: center;
+	padding-left: calc(var(--level, 0) * 24px);
+	position: relative;
+}
+
+.tree-line-container {
+	display: flex;
+	align-items: center;
+	position: relative;
+}
+
+.tree-line {
+	position: absolute;
+	left: 11px;
+	/* Центрирование относительно кнопки */
+	top: 24px;
+	/* Начало от нижней части кнопки */
+	width: 2px;
+	background-color: #ddd;
+	display: none;
+	/* По умолчанию скрыта */
+}
+
+/* Добавляем точку в конце линии */
+.tree-line::after {
+	content: '';
+	position: absolute;
+	bottom: -4px;
+	left: -2px;
+	width: 6px;
+	height: 6px;
+	background-color: #ddd;
+	border-radius: 50%;
+}
+
+/* Горизонтальная линия перед кнопкой */
+.tree-content::before {
+	content: '';
+	position: absolute;
+	left: calc(var(--level, 0) * 24px);
+	width: 24px;
+	height: 2px;
+	background-color: #ddd;
+	display: var(--show-line, none);
+}
+
+.toggle-button {
+	cursor: pointer;
+	width: 24px;
+	height: 24px;
+	border: 1px solid #ddd;
+	background: #fff;
+	border-radius: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-right: 8px;
+	transition: background-color 0.2s;
+	position: relative;
+	z-index: 2;
+	user-select: none;
+	/* Запрещаем выделение текста */
+}
+
+.referrals-count {
+	background: #e3f2fd;
+	color: #1976d2;
+	padding: 2px 8px;
+	border-radius: 12px;
+	font-size: 12px;
+}
+
+.url-cell {
+	max-width: 200px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.level-cell {
+	text-align: center;
+}
+
+.collapsed {
+	display: none;
+}
+
+.level-1 {
+	background-color: #ffffff;
+}
+
+.level-2 {
+	background-color: #fafafa;
+}
+
+.level-3 {
+	background-color: #f5f5f5;
+}
+
+.level-4 {
+	background-color: #f0f0f0;
+}
+
+.referal-row:hover {
+	background-color: #f8f9fa;
+}
+
+.no-referals {
+	text-align: center;
+	padding: 40px;
+	background: #f8f9fa;
+	border-radius: 8px;
+	color: #666;
+}
+
+
+/* Стили для открытых веток */
+.expanded-branch .tree-line {
+	display: block;
+	height: calc(100% + 1px);
+	/* +1px для перекрытия границы ячейки */
+}
+
+/* Стили для последней строки в группе */
+.last-in-branch .tree-line {
+	height: 50%;
+}
+
+/* Добавляем стиль для активной ветки */
+.active-branch .tree-line {
+	background-color: #b0b0b0;
+}
+
+.active-branch .tree-line::after {
+	background-color: #b0b0b0;
+}
