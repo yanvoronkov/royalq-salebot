@@ -1,0 +1,35 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main  # Отслеживаемая ветка
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'  # Версия Node.js (измените, если нужно)
+
+      - name: Install dependencies
+        run: npm install --production
+
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}  # IP-адрес сервера
+          username: ${{ secrets.SERVER_USER }}  # Пользователь SSH
+          key: ${{ secrets.SSH_PRIVATE_KEY }}  # Приватный SSH-ключ
+          port: 22  # Порт SSH (по умолчанию 22)
+          script: |
+            cd /var/www/html/royalq-salebot/ # Путь к проекту
+            git pull origin main # Обновляем код
+            npm ci --production # Устанавливаем зависимости
+            pm2 restart my-app # Перезапускаем приложение
