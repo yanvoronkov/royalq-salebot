@@ -29,7 +29,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}  # Приватный SSH-ключ
           port: 22  # Порт SSH (по умолчанию 22)
           script: |
-            cd /var/www/html/royalq-salebot/ # Путь к проекту
-            git pull origin main # Обновляем код
-            npm ci --production # Устанавливаем зависимости
-            pm2 restart my-app # Перезапускаем приложение
+            cd /var/www/html/royalq-salebot/
+            git pull origin main
+            npm ci --production
+            pm2 restart my-app
