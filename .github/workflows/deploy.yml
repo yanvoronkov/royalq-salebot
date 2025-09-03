@@ -19,7 +19,7 @@ jobs:
           node-version: '20'  # Версия Node.js (измените, если нужно)
 
       - name: Install dependencies
-        run: npm install --production
+        run: npm ci --production
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@master

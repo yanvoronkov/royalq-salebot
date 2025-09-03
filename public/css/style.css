@@ -188,3 +188,29 @@
 .active-branch .tree-line::after {
 	background-color: #b0b0b0;
 }
+
+/* Стили для контейнера поиска */
+.search-container {
+	margin-bottom: 20px;
+	display: flex;
+	justify-content: flex-beginning;
+	/* Поле ввода вправо */
+}
+
+/* Стили для поля ввода */
+#searchInput {
+	padding: 10px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	width: 300px;
+	/* Примерная ширина */
+	font-size: 16px;
+	box-sizing: border-box;
+}
+
+#searchInput:focus {
+	outline: none;
+	border-color: #a0a0a0;
+	/* Изменение цвета границы при фокусе */
+	box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}

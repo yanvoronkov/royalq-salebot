@@ -111,3 +111,21 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	});
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+	const searchInput = document.getElementById('searchInput');
+	const tableRows = document.querySelectorAll('.referal-row'); // Предполагаем, что каждая строка таблицы имеет класс .referal-row
+
+	searchInput.addEventListener('input', () => {
+		const searchTerm = searchInput.value.toLowerCase();
+
+		tableRows.forEach(row => {
+			const rowText = row.textContent.toLowerCase();
+			if (rowText.includes(searchTerm)) {
+				row.style.display = ''; // Показываем строку
+			} else {
+				row.style.display = 'none'; // Скрываем строку
+			}
+		});
+	});
+});

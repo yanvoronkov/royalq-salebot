@@ -3,6 +3,7 @@
 <div class="dashboard-container">
 	<!-- <div class="info-section">
 		<h3>Информация о реферале:</h3>
+	
 		<ul class="referal-info">
 			<li><strong>ID:</strong> <%- referal.referal_id %></li>
 			<li><strong>Никнейм:</strong> <%- referal.referal_nickname %></li>
@@ -14,6 +15,9 @@
 			<li><strong>UTM:</strong> <%- referal.utm %></li>
 		</ul>
 	</div> -->
+	<div class="search-container">
+		<input type="text" id="searchInput" placeholder="Поиск по рефералам...">
+	</div>
 
 	<!-- <h3>Реферальное дерево:</h3> -->
 	<% if (referalTree && referalTree.length> 0) { %>
