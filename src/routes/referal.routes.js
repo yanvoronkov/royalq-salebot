@@ -4,6 +4,11 @@ import referalController from '../controllers/referal.controller.js';
 
 const router = express.Router();
 
+// Корневой маршрут - перенаправление на дашборд root001
+router.get('/', (req, res) => {
+	res.redirect('/dashboard/root001');
+});
+
 // API endpoints для рефералов (CRUD операции)
 router.post('/api/referals', referalController.createReferal);       // POST /api/referals - Создать реферала
 router.get('/api/referals/:referalId', referalController.getReferalById); // GET /api/referals/:referalId - Получить реферала по ID (сейчас рендерит шаблон для теста)
