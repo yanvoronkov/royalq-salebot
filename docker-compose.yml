@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # MongoDB сервис
+  mongodb:
+    image: mongo:7.0
+    container_name: royalq-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: royalq-salebot
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - royalq-network
+
+  # Приложение
+  app:
+    build: .
+    container_name: royalq-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/royalq-salebot?authSource=admin
+      SALEBOT_API_BASE_URL: https://api.salebot.pro
+      SALEBOT_API_KEY: your_api_key_here
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+    networks:
+      - royalq-network
+    volumes:
+      - ./logs:/app/logs
+
+  # Nginx (опционально)
+  nginx:
+    image: nginx:alpine
+    container_name: royalq-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - royalq-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  royalq-network:
+    driver: bridge
