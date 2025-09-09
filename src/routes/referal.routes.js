@@ -11,7 +11,8 @@ router.put('/api/referals/:referalId', referalController.updateReferal);    // P
 router.delete('/api/referals/:referalId', referalController.deleteReferal); // DELETE /api/referals/:referalId - Удалить реферала по ID
 
 // Веб-интерфейс: дашборд для реферала
-router.get('/dashboard/:refererId', referalController.getReferalDashboard); // GET /dashboard/:refererId - Отобразить дашборд реферала
+router.get('/dashboard/:refererId', referalController.getReferalDashboard); // GET /dashboard/:refererId - Отобразить дашборд реферала (дерево)
+router.get('/table/:refererId', referalController.getReferalTable); // GET /table/:refererId - Отобразить табличный вид реферала
 
 // API: получить дерево рефералов (заглушка, пока не реализуем)
 router.get('/api/referals/:refererId/tree', (req, res) => {

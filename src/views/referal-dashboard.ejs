@@ -1,92 +1,271 @@
-<!-- <h2>Реферальный дашборд для <%- referal.referal_nickname %> (<%- referal.referal_id %>)</h2> -->
+<!DOCTYPE html>
+<html lang="ru">
 
-<div class="dashboard-container">
-	<!-- <div class="info-section">
-		<h3>Информация о реферале:</h3>
-	
-		<ul class="referal-info">
-			<li><strong>ID:</strong> <%- referal.referal_id %></li>
-			<li><strong>Никнейм:</strong> <%- referal.referal_nickname %></li>
-			<li><strong>Имя:</strong> <%- referal.referal_name %></li>
-			<li><strong>Дата регистрации:</strong> <%- new Date(referal.reg_date).toLocaleDateString() %></li>
-			<li><strong>Referer ID:</strong> <%- referal.referer_id %></li>
-			<li><strong>Реферальная ссылка:</strong> <%- referal.referral_link_url %></li>
-			<li><strong>Личный канал:</strong> <%- referal.personal_channel_link %></li>
-			<li><strong>UTM:</strong> <%- referal.utm %></li>
-		</ul>
-	</div> -->
-	<div class="search-container">
-		<input type="text" id="searchInput" placeholder="Поиск по рефералам...">
-	</div>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Реферальный Дашборд - <%- referal.referal_nickname %></title>
+	<link rel="stylesheet" href="/css/style.css">
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
 
-	<!-- <h3>Реферальное дерево:</h3> -->
-	<% if (referalTree && referalTree.length> 0) { %>
-		<div class="table-container">
-			<table class="referal-table">
-				<thead>
-					<tr>
-						<th>Рефералы</th>
-						<th>ID</th>
-						<th>Никнейм</th>
-						<th>Имя</th>
-						<th>Дата регистрации</th>
-						<th>Referer ID</th>
-						<th>Реферальная ссылка</th>
-						<th>Личный канал</th>
-						<th>UTM</th>
-						<th>Уровень</th>
-					</tr>
-				</thead>
-				<tbody>
-					<% function countTotalReferrals(node) { let count=(node.children && node.children.length) || 0; if
-						(node.children) { node.children.forEach(child=> {
-						count += countTotalReferrals(child);
-						});
-						}
-						return count;
-						} %>
+<body>
+	<div class="dashboard-wrapper">
+		<!-- Header Section -->
+		<header class="dashboard-header">
+			<div class="header-content">
+				<div class="user-info">
+					<div class="avatar">
+						<i class="fas fa-user"></i>
+					</div>
+					<div class="user-details">
+						<h1><%- referal.referal_name %></h1>
+						<p class="user-id">@<%- referal.referal_nickname %> • ID: <%- referal.referal_id %></p>
+						<p class="join-date">Присоединился: <%- new Date(referal.reg_date).toLocaleDateString('ru-RU')
+								%></p>
+					</div>
+				</div>
+				<div class="header-actions">
+					<div class="view-switcher">
+						<button class="btn btn-primary" onclick="switchToTree()">
+							<i class="fas fa-sitemap"></i>
+							Дерево
+						</button>
+						<button class="btn btn-outline" onclick="switchToTable()">
+							<i class="fas fa-table"></i>
+							Таблица
+						</button>
+					</div>
+					<button class="btn btn-secondary" onclick="copyReferralLink()">
+						<i class="fas fa-link"></i>
+						Копировать ссылку
+					</button>
+					<button class="btn btn-secondary" onclick="exportData()">
+						<i class="fas fa-download"></i>
+						Экспорт
+					</button>
+				</div>
+			</div>
+		</header>
 
-						<% function displayReferalTree(tree, level, parentReferalId) { tree.forEach(referal=> {
-							const totalReferrals = countTotalReferrals(referal);
-							%>
-							<tr class="referal-row level-<%= level %> <%= level > 1 ? 'collapsed' : '' %>"
-								data-referal-id="<%- referal.referal_id %>" data-referer-id="<%- parentReferalId %>"
-								data-level="<%- level %>">
-								<td class="tree-cell">
-									<div class="tree-content" style="--level: <%- level - 1 %>">
-										<div class="tree-line-container">
-											<% if (totalReferrals> 0) { %>
-												<div class="tree-line"></div>
-												<button class="toggle-button" title="Развернуть/Свернуть">+</button>
-												<span class="referrals-count">
-													<%= totalReferrals %>
-												</span>
-												<% } %>
+		<!-- Stats Section -->
+		<section class="stats-section">
+			<div class="stats-grid">
+				<div class="stat-card">
+					<div class="stat-icon">
+						<i class="fas fa-users"></i>
+					</div>
+					<div class="stat-content">
+						<h3 id="totalReferrals">0</h3>
+						<p>Всего рефералов</p>
+					</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-icon">
+						<i class="fas fa-layer-group"></i>
+					</div>
+					<div class="stat-content">
+						<h3 id="maxLevel">0</h3>
+						<p>Макс. глубина</p>
+					</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-icon">
+						<i class="fas fa-chart-line"></i>
+					</div>
+					<div class="stat-content">
+						<h3 id="activeLevels">0</h3>
+						<p>Активных уровней</p>
+					</div>
+				</div>
+				<div class="stat-card">
+					<div class="stat-icon">
+						<i class="fas fa-calendar-day"></i>
+					</div>
+					<div class="stat-content">
+						<h3 id="todayReferrals">0</h3>
+						<p>Сегодня</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Controls Section -->
+		<section class="controls-section">
+			<div class="controls-left">
+				<div class="search-container">
+					<i class="fas fa-search search-icon"></i>
+					<input type="text" id="searchInput" placeholder="Поиск по имени, никнейму или ID...">
+					<button class="clear-search" id="clearSearch" style="display: none;">
+						<i class="fas fa-times"></i>
+					</button>
+				</div>
+			</div>
+			<div class="controls-right">
+				<div class="view-controls">
+					<button class="btn btn-outline" id="expandAll">
+						<i class="fas fa-expand-arrows-alt"></i>
+						Развернуть все
+					</button>
+					<button class="btn btn-outline" id="collapseAll">
+						<i class="fas fa-compress-arrows-alt"></i>
+						Свернуть все
+					</button>
+				</div>
+				<div class="level-filter">
+					<label for="levelFilter">Показать уровни:</label>
+					<select id="levelFilter">
+						<option value="all">Все уровни</option>
+						<option value="1">Только 1-й уровень</option>
+						<option value="2">До 2-го уровня</option>
+						<option value="3">До 3-го уровня</option>
+						<option value="4">До 4-го уровня</option>
+						<option value="5">До 5-го уровня</option>
+						<option value="6">До 6-го уровня</option>
+						<option value="7">До 7-го уровня</option>
+						<option value="8">До 8-го уровня</option>
+						<option value="9">До 9-го уровня</option>
+						<option value="10">До 10-го уровня</option>
+					</select>
+				</div>
+			</div>
+		</section>
+
+		<!-- Tree Section -->
+		<section class="tree-section">
+			<% if (referalTree && referalTree.length> 0) { %>
+				<div class="tree-container">
+					<div class="tree-header">
+						<h2>Реферальное дерево</h2>
+						<div class="tree-info">
+							<span class="tree-stats">
+								<i class="fas fa-sitemap"></i>
+								<span id="treeStats">Загрузка...</span>
+							</span>
+						</div>
+					</div>
+
+					<div class="tree-content" id="treeContent">
+						<% function countTotalReferrals(node) { let count=(node.children && node.children.length) || 0;
+							if (node.children) { node.children.forEach(child=> {
+							count += countTotalReferrals(child);
+							});
+							}
+							return count;
+							} %>
+
+							<% function displayReferalTree(tree, level, parentReferalId) { tree.forEach(referal=> {
+								const totalReferrals = countTotalReferrals(referal);
+								const hasChildren = referal.children && referal.children.length > 0;
+								%>
+								<div class="tree-node level-<%= level %> <%= level > 1 ? 'collapsed' : '' %>"
+									data-referal-id="<%- referal.referal_id %>" data-referer-id="<%- parentReferalId %>"
+									data-level="<%- level %>">
+
+									<div class="node-content">
+										<div class="node-connector">
+											<% if (hasChildren) { %>
+												<button class="toggle-btn" data-target="<%- referal.referal_id %>">
+													<i class="fas fa-chevron-right"></i>
+												</button>
+												<% } else { %>
+													<div class="no-children"></div>
+													<% } %>
+										</div>
+
+										<div class="node-info">
+											<div class="node-header">
+												<div class="user-avatar">
+													<i class="fas fa-user"></i>
+												</div>
+												<div class="user-details">
+													<h3><%- referal.referal_name %></h3>
+													<p class="user-nickname">@<%- referal.referal_nickname %></p>
+													<p class="user-id">ID: <%- referal.referal_id %></p>
+												</div>
+												<div class="node-stats">
+													<div class="stat-badge level-<%= level %>">
+														<i class="fas fa-layer-group"></i>
+														<span>Уровень <%= level %></span>
+													</div>
+													<% if (totalReferrals> 0) { %>
+														<div class="stat-badge referrals">
+															<i class="fas fa-users"></i>
+															<span>
+																<%= totalReferrals %>
+															</span>
+														</div>
+														<% } %>
+												</div>
+											</div>
+
+											<div class="node-meta">
+												<div class="meta-item">
+													<i class="fas fa-calendar"></i>
+													<span><%- new Date(referal.reg_date).toLocaleDateString('ru-RU')
+															%></span>
+												</div>
+												<% if (referal.referer_id) { %>
+													<div class="meta-item">
+														<i class="fas fa-user-plus"></i>
+														<span>Приглашен: <%- referal.referer_id %></span>
+													</div>
+													<% } %>
+											</div>
+
+											<div class="node-actions">
+												<button class="action-btn"
+													onclick="copyToClipboard('<%- referal.referral_link_url %>')"
+													title="Копировать реферальную ссылку">
+													<i class="fas fa-link"></i>
+												</button>
+												<button class="action-btn"
+													onclick="viewDetails('<%- referal.referal_id %>')"
+													title="Подробности">
+													<i class="fas fa-info-circle"></i>
+												</button>
+												<% if (referal.personal_channel_link) { %>
+													<a href="<%- referal.personal_channel_link %>" target="_blank"
+														class="action-btn" title="Открыть канал">
+														<i class="fab fa-telegram"></i>
+													</a>
+													<% } %>
+											</div>
 										</div>
 									</div>
-								</td>
-								<td><%- referal.referal_id %></td>
-								<td><%- referal.referal_nickname %></td>
-								<td><%- referal.referal_name %></td>
-								<td><%- new Date(referal.reg_date).toLocaleDateString() %></td>
-								<td><%- referal.referer_id %></td>
-								<td class="url-cell" title="<%- referal.referral_link_url %>">
-									<%- referal.referral_link_url %>
-								</td>
-								<td><%- referal.personal_channel_link %></td>
-								<td><%- referal.utm %></td>
-								<td class="level-cell"><%- level %></td>
-							</tr>
-							<% if (referal.children && referal.children.length> 0) {
-								displayReferalTree(referal.children, level + 1, referal.referal_id);
-								} %>
+
+									<% if (hasChildren) { %>
+										<div class="children-container" id="children-<%- referal.referal_id %>">
+											<% displayReferalTree(referal.children, level + 1, referal.referal_id); %>
+										</div>
+										<% } %>
+								</div>
 								<% }); } %>
 
 									<% displayReferalTree(referalTree, 1, null); %>
-				</tbody>
-			</table>
-		</div>
-		<% } else { %>
-			<p class="no-referals">В вашей реферальной сети пока нет рефералов.</p>
-			<% } %>
-</div>
+					</div>
+				</div>
+				<% } else { %>
+					<div class="empty-state">
+						<div class="empty-icon">
+							<i class="fas fa-users"></i>
+						</div>
+						<h3>Пока нет рефералов</h3>
+						<p>Начните приглашать друзей, чтобы построить свою реферальную сеть!</p>
+						<button class="btn btn-primary" onclick="copyReferralLink()">
+							<i class="fas fa-share"></i>
+							Поделиться ссылкой
+						</button>
+					</div>
+					<% } %>
+		</section>
+	</div>
+
+	<!-- Hidden referral link for copying -->
+	<input type="hidden" id="referralLink" value="<%- referal.referral_link_url %>">
+
+	<script src="/js/script.js"></script>
+</body>
+
+</html>

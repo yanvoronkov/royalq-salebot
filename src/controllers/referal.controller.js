@@ -35,13 +35,35 @@ class ReferalController {
 			const referalTree = await referalService.getReferalTree(refererId); // Получаем дерево рефералов
 			const referalData = await referalService.getReferalById(refererId); // Получаем данные текущего реферала
 
-			// Рендерим шаблон referal-dashboard.ejs и вставляем его в layout.ejs
-			res.render('layout', {
+			// Рендерим шаблон referal-dashboard.ejs
+			res.render('referal-dashboard', {
 				title: `Dashboard for ${refererId}`, // Заголовок страницы
-				body: await res.renderToString('referal-dashboard', { // Рендерим referal-dashboard.ejs в строку
-					referal: referalData,
-					referalTree: referalTree
-				})
+				referal: referalData,
+				referalTree: referalTree
+			});
+		} catch (error) {
+			next(error); // Передаем ошибку в централизованный обработчик
+		}
+	}
+
+	/**
+	 * Получает реферала по ID и отображает табличный вид дашборда.
+	 * Обрабатывает GET запрос на получение реферала по referer_id и рендерит шаблон 'referal-table'.
+	 * @param {Request} req - Объект запроса Express.
+	 * @param {Response} res - Объект ответа Express.
+	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
+	 */
+	async getReferalTable(req, res, next) {
+		try {
+			const refererId = req.params.refererId; // Получаем referer_id из параметров запроса
+			const referalTree = await referalService.getReferalTree(refererId); // Получаем дерево рефералов
+			const referalData = await referalService.getReferalById(refererId); // Получаем данные текущего реферала
+
+			// Рендерим шаблон referal-table.ejs
+			res.render('referal-table', {
+				title: `Table for ${refererId}`, // Заголовок страницы
+				referal: referalData,
+				referalTree: referalTree
 			});
 		} catch (error) {
 			next(error); // Передаем ошибку в централизованный обработчик
@@ -56,19 +78,14 @@ class ReferalController {
 	 * @param {Response} res - Объект ответа Express.
 	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
 	 */
-	async getReferalById(req, res, next) { // <--- **ОБНОВЛЕННЫЙ getReferalById**
+	async getReferalById(req, res, next) {
 		try {
 			const referalId = req.params.referalId;
 			const referal = await referalService.getReferalById(referalId);
 
 			if (referal) {
-				// Теперь по умолчанию рендерим шаблон дашборда для тестирования
-				return res.render('referal-dashboard', { // <--- **Рендерим шаблон для тестирования**
-					title: 'Дашборд реферала (тест)',
-					referal: referal
-				});
-				// Если нужно вернуть JSON для API, раскомментируйте строку ниже и закомментируйте res.render выше
-				// res.status(200).json({ data: referal }); // Возвращаем JSON для API (как было раньше)
+				// Возвращаем JSON для API
+				res.status(200).json({ data: referal });
 			} else {
 				res.status(404).json({ message: 'Referal not found' });
 			}
