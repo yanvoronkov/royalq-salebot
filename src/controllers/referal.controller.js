@@ -85,15 +85,15 @@ class ReferalController {
 
 			if (referal) {
 				// Возвращаем JSON для API с status: true
-				res.status(200).json({ 
+				res.status(200).json({
 					status: true,
-					data: referal 
+					data: referal
 				});
 			} else {
 				// Возвращаем JSON с status: false для несуществующего реферала
-				res.status(200).json({ 
+				res.status(200).json({
 					status: false,
-					message: 'Referal not found' 
+					message: 'Referal not found'
 				});
 			}
 		} catch (error) {
