@@ -52,9 +52,10 @@ Content-Type: application/json
 GET /api/referals/user123
 ```
 
-**Ответ (200 OK)**:
+**Ответ для существующего реферала (200 OK)**:
 ```json
 {
+  "status": true,
   "data": {
     "referal_id": "user123",
     "referer_id": "parent456",
@@ -68,6 +69,14 @@ GET /api/referals/user123
     "createdAt": "2024-01-15T10:30:00.000Z",
     "updatedAt": "2024-01-15T10:30:00.000Z"
   }
+}
+```
+
+**Ответ для несуществующего реферала (200 OK)**:
+```json
+{
+  "status": false,
+  "message": "Referal not found"
 }
 ```
 
@@ -235,13 +244,11 @@ GET /dashboard/parent456
 
 ### Примеры ошибок
 
-**Реферал не найден (404)**:
+**Реферал не найден (200)**:
 ```json
 {
-  "error": {
-    "message": "Referal not found",
-    "code": "REFERAL_NOT_FOUND"
-  }
+  "status": false,
+  "message": "Referal not found"
 }
 ```
 

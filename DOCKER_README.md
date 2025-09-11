@@ -17,6 +17,7 @@ docker-compose up --build -d
 make init-data
 
 # Или напрямую
+mdr
 docker-compose exec app node scripts/init-docker-data.js
 ```
 

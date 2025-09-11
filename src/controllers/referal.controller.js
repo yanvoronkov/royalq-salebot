@@ -72,7 +72,7 @@ class ReferalController {
 
 
 	/**
-	 * Получает реферала по ID и возвращает JSON (API endpoint - остается как есть).
+	 * Получает реферала по ID и возвращает JSON с параметром status.
 	 * Обрабатывает GET запрос на получение реферала по referal_id для API.
 	 * @param {Request} req - Объект запроса Express.
 	 * @param {Response} res - Объект ответа Express.
@@ -84,10 +84,17 @@ class ReferalController {
 			const referal = await referalService.getReferalById(referalId);
 
 			if (referal) {
-				// Возвращаем JSON для API
-				res.status(200).json({ data: referal });
+				// Возвращаем JSON для API с status: true
+				res.status(200).json({ 
+					status: true,
+					data: referal 
+				});
 			} else {
-				res.status(404).json({ message: 'Referal not found' });
+				// Возвращаем JSON с status: false для несуществующего реферала
+				res.status(200).json({ 
+					status: false,
+					message: 'Referal not found' 
+				});
 			}
 		} catch (error) {
 			console.error("Error in ReferalController - getReferalById:", error);
