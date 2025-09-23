@@ -1,5 +1,5 @@
-# Многоэтапная сборка для оптимизации размера образа
-FROM node:20-alpine AS builder
+# Используем официальный Node.js образ
+FROM node:20-alpine
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
@@ -7,31 +7,14 @@ WORKDIR /app
 # Копируем package.json и package-lock.json
 COPY package*.json ./
 
-# Устанавливаем все зависимости (включая dev)
-RUN npm ci
+# Устанавливаем зависимости
+RUN npm ci --only=production && npm cache clean --force
 
 # Копируем исходный код
 COPY . .
 
-# Создаем production образ
-FROM node:20-alpine AS production
-
-# Устанавливаем рабочую директорию
-WORKDIR /app
-
-# Копируем package.json и package-lock.json
-COPY package*.json ./
-
-# Устанавливаем только production зависимости
-RUN npm ci --only=production && npm cache clean --force
-
-# Копируем только необходимые файлы из builder
-COPY --from=builder /app/src ./src
-COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/nginx.conf ./nginx.conf
-
-# Создаем директории public
-RUN mkdir -p ./public/css ./public/js
+# Создаем директории для логов и public
+RUN mkdir -p ./logs ./public/css ./public/js
 
 # Создаем пользователя для безопасности
 RUN addgroup -g 1001 -S nodejs && \
