@@ -1,6 +1,6 @@
 # Makefile для управления Docker контейнерами
 
-.PHONY: help build up down restart logs clean init-data
+.PHONY: help build up down restart logs clean init-data production deploy
 
 # Показать справку
 help:
@@ -16,6 +16,10 @@ help:
 	@echo "  init-data  - Инициализировать тестовые данные"
 	@echo "  shell      - Войти в контейнер приложения"
 	@echo "  db-shell   - Войти в MongoDB shell"
+	@echo "  production - Запустить в продакшн режиме"
+	@echo "  deploy     - Полный деплой на сервер"
+	@echo "  backup     - Создать бэкап базы данных"
+	@echo "  restore    - Восстановить базу данных"
 
 # Сборка образов
 build:
@@ -76,3 +80,39 @@ health:
 	@curl -f http://localhost:3000 || echo "Приложение недоступно"
 	@echo "Проверка MongoDB..."
 	@docker-compose exec mongodb mongo --eval "db.adminCommand('ping')" || echo "MongoDB недоступен"
+
+# Продакшн режим
+production:
+	@echo "Запуск в продакшн режиме..."
+	@if [ ! -f .env ]; then \
+		echo "Создание .env файла из примера..."; \
+		cp env.production.example .env; \
+		echo "Пожалуйста, отредактируйте .env файл с вашими настройками"; \
+		exit 1; \
+	fi
+	docker-compose -f docker-compose.yml up --build -d
+	@echo "Приложение запущено в продакшн режиме"
+	@echo "Проверьте статус: make status"
+
+# Полный деплой
+deploy: production
+	@echo "Создание бэкапа..."
+	@make backup
+	@echo "Деплой завершен"
+
+# Бэкап базы данных
+backup:
+	@echo "Создание бэкапа базы данных..."
+	@mkdir -p backups
+	@docker-compose exec mongodb mongodump --out /data/backup
+	@docker cp royalq-mongodb:/data/backup ./backups/backup-$(shell date +%Y%m%d-%H%M%S)
+	@echo "Бэкап создан в директории backups/"
+
+# Восстановление базы данных
+restore:
+	@echo "Восстановление базы данных..."
+	@echo "Пожалуйста, укажите путь к бэкапу:"
+	@read -p "Путь к бэкапу: " backup_path; \
+	docker cp $$backup_path royalq-mongodb:/data/restore; \
+	docker-compose exec mongodb mongorestore /data/restore
+	@echo "База данных восстановлена"

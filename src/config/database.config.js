@@ -7,7 +7,7 @@ dotenv.config(); // Загружаем переменные окружения �
 const connectDB = async () => {
 	try {
 		// Используем переменную окружения или локальную MongoDB по умолчанию
-		const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/royalq-salebot';
+		const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/royalq_salebot_db';
 
 		await mongoose.connect(mongoURI, {
 

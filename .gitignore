@@ -1,5 +1,9 @@
 node_modules/
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # macOS
 .DS_Store
@@ -49,8 +53,25 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Docker
+.dockerignore
+
+# SSL certificates
+ssl/
+*.pem
+*.key
+*.crt
+
+# Production data
+data/
+uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/

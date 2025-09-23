@@ -149,6 +149,185 @@ class ReferalController {
 		}
 	}
 
+	/**
+	 * Получает реферала по ID и отображает современный дашборд.
+	 * Обрабатывает GET запрос на получение реферала по referer_id и рендерит шаблон 'modern-referral-dashboard'.
+	 * @param {Request} req - Объект запроса Express.
+	 * @param {Response} res - Объект ответа Express.
+	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
+	 */
+	async getModernReferralDashboard(req, res, next) {
+		try {
+			const refererId = req.params.refererId; // Получаем referer_id из параметров запроса
+			const referalTree = await referalService.getReferalTree(refererId); // Получаем дерево рефералов
+			const referalData = await referalService.getReferalById(refererId); // Получаем данные текущего реферала
+
+			// Рендерим шаблон modern-referral-dashboard.ejs
+			res.render('modern-referral-dashboard', {
+				title: `Modern Dashboard for ${refererId}`, // Заголовок страницы
+				referal: referalData,
+				referalTree: referalTree
+			});
+		} catch (error) {
+			next(error); // Передаем ошибку в централизованный обработчик
+		}
+	}
+
+	/**
+	 * Получает реферала по ID и отображает современную таблицу.
+	 * Обрабатывает GET запрос на получение реферала по referer_id и рендерит шаблон 'modern-referral-table'.
+	 * @param {Request} req - Объект запроса Express.
+	 * @param {Response} res - Объект ответа Express.
+	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
+	 */
+	async getModernReferralTable(req, res, next) {
+		try {
+			const refererId = req.params.refererId; // Получаем referer_id из параметров запроса
+			const referalTree = await referalService.getReferalTree(refererId); // Получаем дерево рефералов
+			const referalData = await referalService.getReferalById(refererId); // Получаем данные текущего реферала
+
+			// Рендерим шаблон modern-referral-table.ejs
+			res.render('modern-referral-table', {
+				title: `Modern Table for ${refererId}`, // Заголовок страницы
+				referal: referalData,
+				referalTree: referalTree
+			});
+		} catch (error) {
+			next(error); // Передаем ошибку в централизованный обработчик
+		}
+	}
+
+	/**
+	 * Отображает новый интерфейс реферальной сети.
+	 * Обрабатывает GET запрос и рендерит шаблон 'referral-network'.
+	 * @param {Request} req - Объект запроса Express.
+	 * @param {Response} res - Объект ответа Express.
+	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
+	 */
+	async getReferralNetwork(req, res, next) {
+		try {
+			// Рендерим шаблон referral-network.ejs
+			res.render('referral-network', {
+				title: 'Реферальная сеть'
+			});
+		} catch (error) {
+			next(error); // Передаем ошибку в централизованный обработчик
+		}
+	}
+
+	/**
+	 * Получает все рефералы в виде дерева для API.
+	 * Обрабатывает GET запрос и возвращает JSON с данными всех рефералов.
+	 * @param {Request} req - Объект запроса Express.
+	 * @param {Response} res - Объект ответа Express.
+	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
+	 */
+	async getAllReferralsTree(req, res, next) {
+		try {
+			// Получаем дерево всех рефералов
+			const referralTrees = await referalService.getAllReferralsTree();
+
+			res.status(200).json({
+				status: true,
+				data: referralTrees
+			});
+		} catch (error) {
+			console.error("Error in ReferalController - getAllReferralsTree:", error);
+			next(error);
+		}
+	}
+
+	/**
+	 * Получает статистику активности рефералов для API.
+	 * Обрабатывает GET запрос и возвращает JSON с количеством активных и неактивных рефералов.
+	 * @param {Request} req - Объект запроса Express.
+	 * @param {Response} res - Объект ответа Express.
+	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
+	 */
+	async getActivityStats(req, res, next) {
+		try {
+			// Получаем статистику активности
+			const activityStats = await referalService.getActivityStats();
+
+			res.status(200).json({
+				status: true,
+				data: activityStats
+			});
+		} catch (error) {
+			console.error("Error in ReferalController - getActivityStats:", error);
+			next(error);
+		}
+	}
+
+	/**
+	 * Отображает интерфейс реферальной сети для конкретного пользователя.
+	 * Обрабатывает GET запрос и рендерит шаблон 'referral-network' с данными конкретного пользователя.
+	 * @param {Request} req - Объект запроса Express.
+	 * @param {Response} res - Объект ответа Express.
+	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
+	 */
+	async getUserReferralNetwork(req, res, next) {
+		try {
+			const referalId = req.params.referalId;
+
+			// Рендерим шаблон referral-network.ejs с ID пользователя
+			res.render('referral-network', {
+				title: `Реферальная сеть - ${referalId}`,
+				userReferalId: referalId
+			});
+		} catch (error) {
+			next(error); // Передаем ошибку в централизованный обработчик
+		}
+	}
+
+	/**
+	 * Получает дерево рефералов для конкретного пользователя для API.
+	 * Обрабатывает GET запрос и возвращает JSON с данными рефералов конкретного пользователя.
+	 * @param {Request} req - Объект запроса Express.
+	 * @param {Response} res - Объект ответа Express.
+	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
+	 */
+	async getUserReferralsTree(req, res, next) {
+		try {
+			const referalId = req.params.referalId;
+
+			// Получаем дерево рефералов для конкретного пользователя
+			const referralTree = await referalService.getReferalTree(referalId);
+
+			res.status(200).json({
+				status: true,
+				data: referralTree
+			});
+		} catch (error) {
+			console.error("Error in ReferalController - getUserReferralsTree:", error);
+			next(error);
+		}
+	}
+
+	/**
+	 * Получает статистику активности рефералов для конкретного пользователя для API.
+	 * Обрабатывает GET запрос и возвращает JSON с количеством активных и неактивных рефералов пользователя.
+	 * @param {Request} req - Объект запроса Express.
+	 * @param {Response} res - Объект ответа Express.
+	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
+	 */
+	async getUserActivityStats(req, res, next) {
+		try {
+			const referalId = req.params.referalId;
+
+			// Получаем статистику активности для конкретного пользователя
+			const activityStats = await referalService.getUserActivityStats(referalId);
+
+			res.status(200).json({
+				status: true,
+				data: activityStats
+			});
+		} catch (error) {
+			console.error("Error in ReferalController - getUserActivityStats:", error);
+			next(error);
+		}
+	}
+
 	// Здесь будут добавлены другие методы контроллера (например, для получения дерева, поиска, фильтрации)
 
 }

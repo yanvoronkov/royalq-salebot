@@ -15,16 +15,8 @@ API построен на REST принципах и предоставляет 
 POST /api/referals
 Content-Type: application/json
 
-{
-  "referal_id": "user123",
-  "referer_id": "parent456",
-  "referal_nickname": "john_doe",
-  "referer_nickname": "parent_user",
-  "referal_name": "John Doe",
-  "referral_link_url": "https://example.com/ref/user123",
-  "personal_channel_link": "https://t.me/user123_channel",
-  "utm": "source=telegram&campaign=referral"
-}
+
+
 ```
 
 **Ответ (201 Created)**:
