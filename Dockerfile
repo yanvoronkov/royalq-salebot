@@ -28,8 +28,10 @@ RUN npm ci --only=production && npm cache clean --force
 # Копируем только необходимые файлы из builder
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/public ./public
 COPY --from=builder /app/nginx.conf ./nginx.conf
+
+# Создаем директории public
+RUN mkdir -p ./public/css ./public/js
 
 # Создаем пользователя для безопасности
 RUN addgroup -g 1001 -S nodejs && \
