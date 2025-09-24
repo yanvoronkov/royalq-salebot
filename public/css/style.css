@@ -1,0 +1,465 @@
+/* RoyalQ Salebot - Referral Network Styles */
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+	margin: 0;
+	background: #f5f7fa;
+}
+
+.container {
+	width: 100%;
+	margin: 0 auto;
+	background: white;
+	border-bottom-right-radius: 12px;
+	border-bottom-left-radius: 12px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+	overflow: hidden;
+}
+
+.header {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+	padding: 20px;
+	text-align: center;
+}
+
+.table-container {
+	overflow: auto;
+	max-height: 80vh;
+	margin: 0 5px;
+}
+
+.referral-table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+	font-size: 14px;
+}
+
+.table-header {
+	background: #f8fafc;
+	position: sticky;
+	top: 0;
+	z-index: 104;
+}
+
+.table-header th {
+	padding: 15px 12px;
+	text-align: left;
+	font-weight: 600;
+	color: #374151;
+	border-bottom: 2px solid #e5e7eb;
+	border-right: 1px solid #e5e7eb;
+}
+
+.table-header th:last-child {
+	border-right: none;
+}
+
+.table-row {
+	position: relative;
+	transition: all 0.2s ease;
+}
+
+.table-row:hover {
+	background: #f9fafb;
+}
+
+.table-row td {
+	padding: 5px;
+	border-bottom: 1px solid #e5e7eb;
+	border-right: 1px solid #e5e7eb;
+	vertical-align: middle;
+}
+
+.table-row td:last-child {
+	border-right: none;
+}
+
+/* Стили для древовидной структуры */
+.tree-cell {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.tree-toggle {
+	width: 40px;
+	border: none;
+	background: #3b82f6;
+	color: white;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 9px;
+	font-weight: bold;
+	margin-right: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
+	z-index: 100;
+	min-width: 32px;
+	gap: 2px;
+}
+
+.tree-toggle:hover {
+	background: #2563eb;
+	transform: scale(1.05);
+}
+
+.tree-toggle.no-children {
+	background: #3b82f6;
+	cursor: default;
+	border: 1px solid #e5e7eb;
+}
+
+.tree-toggle.no-children:hover {
+	transform: none;
+}
+
+/* SVG иконки для кнопок */
+.tree-toggle svg {
+	width: 20px;
+	height: 20px;
+	flex-shrink: 0;
+}
+
+.tree-toggle .count-text {
+	font-size: 9px;
+	font-weight: bold;
+	margin-left: 2px;
+}
+
+/* Соединительные линии */
+.tree-vertical-line {
+	position: absolute;
+	width: 2px;
+	background: #cbd5e1;
+	border-radius: 1px;
+	z-index: 50;
+}
+
+.tree-horizontal-line {
+	position: absolute;
+	height: 12px;
+	width: 12px;
+	background: #acb2d2;
+	top: 30%;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: white;
+	font-size: 8px;
+	font-weight: 600;
+	border: 2px solid white;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	z-index: 101;
+}
+
+/* Уровни вложенности с правильными отступами */
+.level-0 .tree-content {
+	margin-left: 0px;
+}
+
+.level-1 .tree-content {
+	margin-left: 25px;
+}
+
+.level-2 .tree-content {
+	margin-left: 50px;
+}
+
+.level-3 .tree-content {
+	margin-left: 75px;
+}
+
+.level-4 .tree-content {
+	margin-left: 100px;
+}
+
+.tree-content {
+	display: flex;
+	align-items: center;
+}
+
+/* Скрытые строки */
+.hidden {
+	display: none;
+}
+
+/* Статистика */
+.stats-bar {
+	background: #f1f5f9;
+	padding: 15px 20px;
+	border-bottom: 1px solid #e5e7eb;
+	display: flex;
+	gap: 30px;
+	font-size: 14px;
+}
+
+.stat-item {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+
+.stat-label {
+	color: #64748b;
+	font-size: 14px;
+}
+
+.stat-value {
+	font-weight: 600;
+	color: #1e293b;
+}
+
+/* Поле поиска и кнопки управления */
+.search-container {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap; /* Добавлено для адаптивности */
+	margin-left: auto;
+}
+
+.search-input {
+	padding: 4px 12px;
+	border: 1px solid #d1d5db;
+	border-radius: 6px;
+	font-size: 14px;
+	min-width: 100px;
+	background: white;
+	transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+	outline: none;
+	border-color: #3b82f6;
+	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-input::placeholder {
+	color: #9ca3af;
+}
+
+.search-clear {
+	background: #ef4444;
+	color: white;
+	border: none;
+	border-radius: 4px;
+	padding: 6px 10px;
+	font-size: 12px;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+}
+
+.search-clear:hover {
+	background: #dc2626;
+}
+
+.search-clear:disabled {
+	background: #d1d5db;
+	cursor: not-allowed;
+}
+
+/* Кнопки управления */
+.expand-controls {
+	display: flex;
+	gap: 10px;
+	align-items: stretch;
+}
+
+.toggle-expand-btn {
+	background: #10b981;
+	color: white;
+	border: none;
+	border-radius: 4px;
+	padding: 6px 12px;
+	font-size: 12px;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+}
+
+.toggle-expand-btn:hover {
+	background: #059669;
+}
+
+.toggle-expand-btn.collapsed {
+	background: #f59e0b;
+}
+
+.toggle-expand-btn.collapsed:hover {
+	background: #d97706;
+}
+
+/* Новая кнопка обновления */
+.refresh-btn {
+	background: #3b82f6;
+	color: white;
+	border: none;
+	border-radius: 4px;
+	padding: 6px 12px;
+	font-size: 12px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.refresh-btn:hover {
+	background: #2563eb;
+	transform: translateY(-1px);
+}
+
+.refresh-btn:active {
+	transform: translateY(0);
+}
+
+.refresh-btn.loading {
+	background: #6b7280;
+	cursor: not-allowed;
+	transform: none;
+}
+
+.refresh-btn svg {
+	width: 14px;
+	height: 14px;
+}
+
+.refresh-btn.loading svg {
+	animation: spin 1s linear infinite;
+}
+
+/* Индикаторы */
+.status-indicator {
+	display: none;
+}
+
+.status-active {
+	background: #10b981;
+}
+
+.status-inactive {
+	background: #ef4444;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+	/* body {
+		padding: 10px;
+	} */
+	
+	.referral-table {
+		font-size: 12px;
+	}
+
+	.table-row td {
+		padding: 8px 6px;
+	}
+
+	.stats-bar {
+		flex-wrap: wrap;
+		gap: 15px;
+		padding: 10px 15px;
+	}
+
+	.search-container {
+		gap: 8px;
+		margin-left: 0;
+		width: 100%;
+		justify-content: flex-start;
+	}
+
+	.search-input {
+		min-width: 80px;
+		flex: 1;
+	}
+
+	.expand-controls {
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	.toggle-expand-btn,
+	.refresh-btn,
+	.search-clear {
+		font-size: 11px;
+		padding: 5px 10px;
+	}
+}
+
+@media (max-width: 480px) {
+	.header {
+		padding: 15px;
+		border-bottom-right-radius: 12px;
+		border-bottom-left-radius: 12px;
+	}
+	
+	.header h1 {
+		font-size: 18px;
+	}
+
+	.stats-bar {
+		align-items: flex-start;
+		flex-direction: row;
+    	flex-wrap: wrap;
+    	gap: 10px;
+		justify-content: space-between;
+	}
+
+	.search-container {
+		align-items: stretch;
+		gap: 10px;
+	}
+
+	.expand-controls {
+		justify-content: flex-start;
+		width: 100%;
+	}
+}
+
+/* Стили для загрузки */
+.loading {
+	text-align: center;
+	padding: 40px;
+	color: #6b7280;
+}
+
+.loading-spinner {
+	display: inline-block;
+	width: 40px;
+	height: 40px;
+	border: 4px solid #e5e7eb;
+	border-radius: 50%;
+	border-top-color: #3b82f6;
+	animation: spin 1s ease-in-out infinite;
+	margin-bottom: 16px;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.error {
+	text-align: center;
+	padding: 20px;
+	color: #ef4444;
+	background: #fef2f2;
+	border: 1px solid #fecaca;
+	border-radius: 8px;
+	margin: 20px;
+}
+
+/* Анимация для кнопки обновления */
+@keyframes refresh-spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
