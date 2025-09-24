@@ -19,9 +19,19 @@ body {
 .header {
 	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 	color: white;
-	padding: 20px;
+	padding: 15px;
 	text-align: center;
 }
+
+.header {
+		padding: 15px;
+		border-bottom-right-radius: 12px;
+		border-bottom-left-radius: 12px;
+	}
+	
+	.header h1 {
+		font-size: 18px;
+	}
 
 .table-container {
 	overflow: auto;
@@ -189,14 +199,24 @@ body {
 }
 
 /* Статистика */
-.stats-bar {
+.stats-bar-container{
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
 	background: #f1f5f9;
-	padding: 15px 20px;
+	padding: 20px;
 	border-bottom: 1px solid #e5e7eb;
 	display: flex;
-	gap: 30px;
 	font-size: 14px;
 }
+
+.stats-bar {
+		align-items: flex-start;
+		flex-direction: row;
+    	flex-wrap: wrap;
+    	gap: 10px;
+		/* justify-content: space-between; */
+	}
 
 .stat-item {
 	display: flex;
@@ -220,7 +240,7 @@ body {
 	align-items: center;
 	gap: 10px;
 	flex-wrap: wrap; /* Добавлено для адаптивности */
-	margin-left: auto;
+	margin-right: auto;
 }
 
 .search-input {
@@ -347,9 +367,10 @@ body {
 
 /* Мобильная адаптация */
 @media (max-width: 768px) {
-	/* body {
-		padding: 10px;
-	} */
+	.stats-bar-container {
+	padding: 10px;
+	gap: 10px;
+}
 	
 	.referral-table {
 		font-size: 12px;
@@ -362,7 +383,7 @@ body {
 	.stats-bar {
 		flex-wrap: wrap;
 		gap: 15px;
-		padding: 10px 15px;
+		justify-content: flex-start;
 	}
 
 	.search-container {
@@ -391,23 +412,9 @@ body {
 }
 
 @media (max-width: 480px) {
-	.header {
-		padding: 15px;
-		border-bottom-right-radius: 12px;
-		border-bottom-left-radius: 12px;
-	}
 	
-	.header h1 {
-		font-size: 18px;
-	}
 
-	.stats-bar {
-		align-items: flex-start;
-		flex-direction: row;
-    	flex-wrap: wrap;
-    	gap: 10px;
-		justify-content: space-between;
-	}
+	
 
 	.search-container {
 		align-items: stretch;
