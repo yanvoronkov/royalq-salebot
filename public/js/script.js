@@ -337,7 +337,7 @@ function renderTable(data = null) {
 // Функция для обновления статистики
 async function updateStats() {
 	const totalReferralsCount = referralData.length;
-	const maxLevelsCount = Math.max(...referralData.map(item => item.level));
+	const maxLevelsCount = Math.max(...referralData.map(item => item.level)) + 1;
 
 	// Находим последнюю дату регистрации
 	const lastRegDate = referralData
