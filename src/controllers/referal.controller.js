@@ -21,54 +21,7 @@ class ReferalController {
 		}
 	}
 
-	/**
-	 * Получает реферала по ID и отображает дашборд реферала (веб-интерфейс).
-	 * Обрабатывает GET запрос на получение реферала по referal_id и рендерит шаблон 'referal-dashboard'.
-	 * @param {Request} req - Объект запроса Express.
-	 * @param {Response} res - Объект ответа Express.
-	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
-	 */
 
-	async getReferalDashboard(req, res, next) {
-		try {
-			const refererId = req.params.refererId; // Получаем referer_id из параметров запроса
-			const referalTree = await referalService.getReferalTree(refererId); // Получаем дерево рефералов
-			const referalData = await referalService.getReferalById(refererId); // Получаем данные текущего реферала
-
-			// Рендерим шаблон referal-dashboard.ejs
-			res.render('referal-dashboard', {
-				title: `Dashboard for ${refererId}`, // Заголовок страницы
-				referal: referalData,
-				referalTree: referalTree
-			});
-		} catch (error) {
-			next(error); // Передаем ошибку в централизованный обработчик
-		}
-	}
-
-	/**
-	 * Получает реферала по ID и отображает табличный вид дашборда.
-	 * Обрабатывает GET запрос на получение реферала по referer_id и рендерит шаблон 'referal-table'.
-	 * @param {Request} req - Объект запроса Express.
-	 * @param {Response} res - Объект ответа Express.
-	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
-	 */
-	async getReferalTable(req, res, next) {
-		try {
-			const refererId = req.params.refererId; // Получаем referer_id из параметров запроса
-			const referalTree = await referalService.getReferalTree(refererId); // Получаем дерево рефералов
-			const referalData = await referalService.getReferalById(refererId); // Получаем данные текущего реферала
-
-			// Рендерим шаблон referal-table.ejs
-			res.render('referal-table', {
-				title: `Table for ${refererId}`, // Заголовок страницы
-				referal: referalData,
-				referalTree: referalTree
-			});
-		} catch (error) {
-			next(error); // Передаем ошибку в централизованный обработчик
-		}
-	}
 
 
 	/**
@@ -149,53 +102,7 @@ class ReferalController {
 		}
 	}
 
-	/**
-	 * Получает реферала по ID и отображает современный дашборд.
-	 * Обрабатывает GET запрос на получение реферала по referer_id и рендерит шаблон 'modern-referral-dashboard'.
-	 * @param {Request} req - Объект запроса Express.
-	 * @param {Response} res - Объект ответа Express.
-	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
-	 */
-	async getModernReferralDashboard(req, res, next) {
-		try {
-			const refererId = req.params.refererId; // Получаем referer_id из параметров запроса
-			const referalTree = await referalService.getReferalTree(refererId); // Получаем дерево рефералов
-			const referalData = await referalService.getReferalById(refererId); // Получаем данные текущего реферала
 
-			// Рендерим шаблон modern-referral-dashboard.ejs
-			res.render('modern-referral-dashboard', {
-				title: `Modern Dashboard for ${refererId}`, // Заголовок страницы
-				referal: referalData,
-				referalTree: referalTree
-			});
-		} catch (error) {
-			next(error); // Передаем ошибку в централизованный обработчик
-		}
-	}
-
-	/**
-	 * Получает реферала по ID и отображает современную таблицу.
-	 * Обрабатывает GET запрос на получение реферала по referer_id и рендерит шаблон 'modern-referral-table'.
-	 * @param {Request} req - Объект запроса Express.
-	 * @param {Response} res - Объект ответа Express.
-	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
-	 */
-	async getModernReferralTable(req, res, next) {
-		try {
-			const refererId = req.params.refererId; // Получаем referer_id из параметров запроса
-			const referalTree = await referalService.getReferalTree(refererId); // Получаем дерево рефералов
-			const referalData = await referalService.getReferalById(refererId); // Получаем данные текущего реферала
-
-			// Рендерим шаблон modern-referral-table.ejs
-			res.render('modern-referral-table', {
-				title: `Modern Table for ${refererId}`, // Заголовок страницы
-				referal: referalData,
-				referalTree: referalTree
-			});
-		} catch (error) {
-			next(error); // Передаем ошибку в централизованный обработчик
-		}
-	}
 
 	/**
 	 * Отображает новый интерфейс реферальной сети.

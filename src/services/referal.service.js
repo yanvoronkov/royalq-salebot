@@ -71,26 +71,6 @@ class ReferalService {
 			throw error;
 		}
 	}
-	/**
-		 * Удаляет реферала по его referal_id и все связанные с ним платежи.
-		 * @param {string} referalId - Идентификатор реферала для удаления.
-		 * @returns {Promise<Document|null>} - Промис, возвращающий удаленный документ реферала или null, если не найден.
-		 * @throws {Error} - Если произошла ошибка при удалении реферала или связанных платежей.
-		 */
-	async deleteReferal(referalId) {
-		try {
-			// 1. Удаляем платежи, связанные с этим рефералом
-			await Payment.deleteMany({ userId: referalId }); // Удаляем все платежи, где userId соответствует referalId
-
-			// 2. Удаляем самого реферала
-			const deletedReferal = await Referal.findOneAndDelete({ referal_id: referalId }).lean(); // Ищем и удаляем реферала по referal_id, .lean() для оптимизации чтения
-
-			return deletedReferal; // Возвращаем удаленный документ реферала (может быть null, если реферал не был найден)
-		} catch (error) {
-			console.error("Error deleting referal and related payments:", error);
-			throw error;
-		}
-	}
 
 	/**
 	 * Подсчитывает общее количество потомков в дереве (включая всех детей, внуков и т.д.)

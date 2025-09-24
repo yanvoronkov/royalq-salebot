@@ -19,11 +19,6 @@ router.delete('/api/referals/:referalId', referalController.deleteReferal); // D
 router.get('/network', referalController.getReferralNetwork); // GET /network - Отобразить новый интерфейс реферальной сети
 router.get('/network/:referalId', referalController.getUserReferralNetwork); // GET /network/:referalId - Отобразить рефералов конкретного пользователя
 
-// Веб-интерфейс: дашборд для реферала (старые маршруты для совместимости)
-router.get('/dashboard/:refererId', referalController.getReferalDashboard); // GET /dashboard/:refererId - Отобразить дашборд реферала (дерево)
-router.get('/table/:refererId', referalController.getReferalTable); // GET /table/:refererId - Отобразить табличный вид реферала
-router.get('/modern/:refererId', referalController.getModernReferralDashboard); // GET /modern/:refererId - Отобразить современный дашборд реферала
-router.get('/modern-table/:refererId', referalController.getModernReferralTable); // GET /modern-table/:refererId - Отобразить современную таблицу реферала
 
 // API: получить дерево всех рефералов для нового интерфейса
 router.get('/api/referrals/tree', referalController.getAllReferralsTree); // GET /api/referrals/tree - Получить дерево всех рефералов
