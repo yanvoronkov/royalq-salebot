@@ -13,7 +13,9 @@
     "check-db": "node scripts/check-connection.js",
     "test-backend": "node scripts/test-backend.js",
     "monitor-backend": "node scripts/monitor-backend.js",
-    "quick-test": "node scripts/quick-test.js"
+    "quick-test": "node scripts/quick-test.js",
+    "backup-secure": "node scripts/secure-backup.js create",
+    "backup-list": "node scripts/secure-backup.js list"
   },
   "dependencies": {
     "axios": "^1.7.9",
