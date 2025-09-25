@@ -20,6 +20,10 @@ help:
 	@echo "  deploy     - Полный деплой на сервер"
 	@echo "  backup     - Создать бэкап базы данных"
 	@echo "  restore    - Восстановить базу данных"
+	@echo "  check-duplicates - Проверить дубликаты в базе данных"
+	@echo "  clean-duplicates - Очистить дубликаты в базе данных"
+	@echo "  check-indexes - Проверить уникальные индексы"
+	@echo "  test-duplicates - Протестировать защиту от дублирования"
 
 # Сборка образов
 build:
@@ -116,3 +120,29 @@ restore:
 	docker cp $$backup_path royalq-mongodb:/data/restore; \
 	docker-compose exec mongodb mongorestore /data/restore
 	@echo "База данных восстановлена"
+
+# Проверка дубликатов
+check-duplicates:
+	@echo "Проверка дубликатов в базе данных..."
+	docker-compose exec app node scripts/check-unique-indexes.js
+
+# Очистка дубликатов
+clean-duplicates:
+	@echo "Очистка дубликатов в базе данных..."
+	@echo "ВНИМАНИЕ: Это действие удалит дубликаты. Создайте бэкап перед выполнением!"
+	@read -p "Продолжить? (y/N): " confirm; \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		docker-compose exec app node scripts/clean-duplicates.js; \
+	else \
+		echo "Операция отменена"; \
+	fi
+
+# Проверка индексов
+check-indexes:
+	@echo "Проверка уникальных индексов..."
+	docker-compose exec app node scripts/check-unique-indexes.js
+
+# Тестирование защиты от дублирования
+test-duplicates:
+	@echo "Тестирование защиты от дублирования..."
+	docker-compose exec app node scripts/test-duplicate-protection.js

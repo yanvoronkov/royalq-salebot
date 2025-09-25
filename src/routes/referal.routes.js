@@ -10,7 +10,8 @@ router.get('/', (req, res) => {
 });
 
 // API endpoints для рефералов (CRUD операции)
-router.post('/api/referals', referalController.createReferal);       // POST /api/referals - Создать реферала
+router.post('/api/referals', referalController.createReferal);       // POST /api/referals - Создать реферала (строгая проверка на дублирование)
+router.post('/api/referals/upsert', referalController.createOrUpdateReferal); // POST /api/referals/upsert - Создать или обновить реферала (безопасно)
 router.get('/api/referals/:referalId', referalController.getReferalById); // GET /api/referals/:referalId - Получить реферала по ID (сейчас рендерит шаблон для теста)
 router.put('/api/referals/:referalId', referalController.updateReferal);    // PUT /api/referals/:referalId - Обновить реферала по ID
 router.delete('/api/referals/:referalId', referalController.deleteReferal); // DELETE /api/referals/:referalId - Удалить реферала по ID

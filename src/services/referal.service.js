@@ -5,19 +5,77 @@ import Payment from '../models/payment.model.js';
 class ReferalService {
 
 	/**
-	 * Создает нового реферала в базе данных.
+	 * Создает нового реферала в базе данных с проверкой на дублирование.
 	 * @param {Object} referalData - Данные реферала для создания.
 	 * @returns {Promise<Document>} - Промис, возвращающий созданный документ реферала.
-	 * @throws {Error} - Если произошла ошибка при создании реферала.
+	 * @throws {Error} - Если произошла ошибка при создании реферала или реферал уже существует.
 	 */
 	async createReferal(referalData) {
 		try {
-			const referal = new Referal(referalData); // Создаем новый экземпляр модели Referal
-			await referal.save(); // Сохраняем документ в базу данных
-			return referal; // Возвращаем созданный документ
+			// Проверяем, что referal_id предоставлен
+			if (!referalData.referal_id) {
+				const error = new Error('referal_id is required');
+				error.statusCode = 400;
+				throw error;
+			}
+
+			// Проверяем существование реферала с таким referal_id
+			const existingReferal = await Referal.findOne({ referal_id: referalData.referal_id }).lean();
+			if (existingReferal) {
+				const error = new Error(`Referal with ID "${referalData.referal_id}" already exists`);
+				error.statusCode = 409; // Conflict
+				error.code = 'DUPLICATE_REFERAL';
+				throw error;
+			}
+
+			// Создаем новый реферал
+			const referal = new Referal(referalData);
+			await referal.save();
+			return referal;
 		} catch (error) {
+			// Обрабатываем ошибки дублирования MongoDB
+			if (error.code === 11000) {
+				const duplicateError = new Error(`Referal with ID "${referalData.referal_id}" already exists`);
+				duplicateError.statusCode = 409;
+				duplicateError.code = 'DUPLICATE_REFERAL';
+				throw duplicateError;
+			}
+
 			console.error("Error creating referal:", error);
-			throw error; // Пробрасываем ошибку для обработки выше (например, в контроллере)
+			throw error;
+		}
+	}
+
+	/**
+	 * Создает нового реферала или обновляет существующего (upsert).
+	 * @param {Object} referalData - Данные реферала для создания/обновления.
+	 * @returns {Promise<Document>} - Промис, возвращающий созданный или обновленный документ реферала.
+	 * @throws {Error} - Если произошла ошибка при создании/обновлении реферала.
+	 */
+	async createOrUpdateReferal(referalData) {
+		try {
+			// Проверяем, что referal_id предоставлен
+			if (!referalData.referal_id) {
+				const error = new Error('referal_id is required');
+				error.statusCode = 400;
+				throw error;
+			}
+
+			// Используем findOneAndUpdate с upsert для безопасного создания/обновления
+			const referal = await Referal.findOneAndUpdate(
+				{ referal_id: referalData.referal_id }, // Условие поиска
+				referalData, // Данные для обновления
+				{
+					new: true, // Возвращать обновленный документ
+					upsert: true, // Создать, если не существует
+					runValidators: true // Запустить валидаторы схемы
+				}
+			);
+
+			return referal;
+		} catch (error) {
+			console.error("Error creating or updating referal:", error);
+			throw error;
 		}
 	}
 

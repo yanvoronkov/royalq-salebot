@@ -21,8 +21,23 @@ class ReferalController {
 		}
 	}
 
-
-
+	/**
+	 * Создает нового реферала или обновляет существующего (upsert).
+	 * Обрабатывает POST запрос на создание/обновление реферала.
+	 * @param {Request} req - Объект запроса Express.
+	 * @param {Response} res - Объект ответа Express.
+	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
+	 */
+	async createOrUpdateReferal(req, res, next) {
+		try {
+			const referalData = req.body; // Получаем данные реферала из тела запроса
+			const createdOrUpdatedReferal = await referalService.createOrUpdateReferal(referalData); // Вызываем сервис для создания/обновления реферала
+			res.status(200).json({ message: 'Referal created or updated successfully', data: createdOrUpdatedReferal }); // Отправляем успешный ответ с данными
+		} catch (error) {
+			console.error("Error in ReferalController - createOrUpdateReferal:", error);
+			next(error); // Передаем ошибку в централизованный обработчик ошибок
+		}
+	}
 
 	/**
 	 * Получает реферала по ID и возвращает JSON с параметром status.
