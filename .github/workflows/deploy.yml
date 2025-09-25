@@ -29,7 +29,29 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}  # Приватный SSH-ключ
           port: 22  # Порт SSH (по умолчанию 22)
           script: |
+            # Navigate to application directory
             cd /var/www/html/royalq-salebot/
+            
+            # Pull latest changes
             git pull origin main
+            
+            # Install dependencies
             npm ci --production
-            pm2 restart my-app
+            
+            # Run security checks
+            npm run quick-test
+            
+            # Create backup before deployment
+            npm run backup-secure || echo "Backup failed, continuing..."
+            
+            # Restart application with PM2
+            pm2 restart royalq-salebot || pm2 start src/server.js --name royalq-salebot --env production
+            
+            # Save PM2 configuration
+            pm2 save
+            
+            # Check application health
+            sleep 10
+            curl -f http://localhost:3000/health || exit 1
+            
+            echo "Deployment completed successfully!"
