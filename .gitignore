@@ -75,3 +75,23 @@ uploads/
 # Temporary files
 tmp/
 temp/
+
+# Testing and documentation files
+TESTING.md
+README_TESTING.md
+scripts/test-backend.js
+scripts/monitor-backend.js
+scripts/quick-test.js
+
+# Documentation and instructions
+ОБНОВЛЕНИЕ_НА_СЕРВЕРЕ.md
+ИСПРАВЛЕНИЕ_ДУБЛИКАТОВ.md
+ОБНОВЛЕНИЯ_ИНТЕРФЕЙСА.md
+QUICK_DEPLOY.md
+
+# Development and temporary files
+mycode.txt
+node.json
+
+# Keep only main README.md for the project
+README.md

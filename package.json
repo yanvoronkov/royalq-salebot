@@ -10,7 +10,10 @@
     "init-db": "node scripts/init-db.js",
     "clear-db": "node scripts/clear-db.js",
     "backup-db": "node scripts/backup-db.js",
-    "check-db": "node scripts/check-connection.js"
+    "check-db": "node scripts/check-connection.js",
+    "test-backend": "node scripts/test-backend.js",
+    "monitor-backend": "node scripts/monitor-backend.js",
+    "quick-test": "node scripts/quick-test.js"
   },
   "dependencies": {
     "axios": "^1.7.9",
