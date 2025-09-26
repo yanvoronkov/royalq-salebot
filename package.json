@@ -21,7 +21,6 @@
     "test-server": "node scripts/test-server-api.js",
     "test-server-bash": "./scripts/test-server-security.sh",
     "update-security": "./scripts/update-server-security.sh",
-    "test-readonly": "node scripts/test-readonly-endpoint.js",
     "test-readonly": "node scripts/test-readonly-endpoint.js"
   },
   "dependencies": {
