@@ -100,12 +100,17 @@ export const rateLimit = (options = {}) => {
     };
 };
 
+// Настройки rate limiting из переменных окружения
+const WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10); // 1 минута по умолчанию
+const MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '10000', 10); // 10000 запросов по умолчанию
+const API_MAX_REQUESTS = parseInt(process.env.API_RATE_LIMIT_MAX_REQUESTS || '10000', 10); // 10000 API запросов по умолчанию
+
 /**
  * Специальный rate limiter для API endpoints
  */
 export const apiRateLimit = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 минут
-    max: 50, // максимум 50 API запросов
+    windowMs: WINDOW_MS,
+    max: API_MAX_REQUESTS,
     message: 'API rate limit exceeded'
 });
 
@@ -113,7 +118,7 @@ export const apiRateLimit = rateLimit({
  * Специальный rate limiter для веб-интерфейса
  */
 export const webRateLimit = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 минут
-    max: 200, // максимум 200 запросов для веб-интерфейса
+    windowMs: WINDOW_MS,
+    max: MAX_REQUESTS,
     message: 'Web interface rate limit exceeded'
 });
