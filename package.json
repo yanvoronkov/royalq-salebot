@@ -17,7 +17,10 @@
     "backup-secure": "node scripts/secure-backup.js create",
     "backup-list": "node scripts/secure-backup.js list",
     "test-api-security": "node scripts/test-api-security.js",
-    "test-security": "node scripts/test-security-simple.js"
+    "test-security": "node scripts/test-security-simple.js",
+    "test-server": "node scripts/test-server-api.js",
+    "test-server-bash": "./scripts/test-server-security.sh",
+    "update-security": "./scripts/update-server-security.sh"
   },
   "dependencies": {
     "axios": "^1.7.9",
