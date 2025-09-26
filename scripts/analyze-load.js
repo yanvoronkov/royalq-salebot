@@ -9,6 +9,7 @@ import https from 'https';
 import http from 'http';
 
 const BASE_URL = 'https://projects.inetskills.ru';
+const API_READONLY_KEY = 'YdbX9WekeVLzRDbwrgeR+90W2rFE0Q60KzBwg7aP/P0='; // Readonly API ключ
 
 // Функция для выполнения HTTP запросов
 function makeRequest(url, options = {}) {
@@ -81,10 +82,10 @@ async function testLoad() {
     console.log('🧪 Тестирование нагрузки...');
     
     const endpoints = [
-        '/health',
-        '/network',
-        '/api/referrals/tree',
-        '/api/referrals/activity-stats'
+        { path: '/health', needsAuth: false },
+        { path: '/network', needsAuth: false },
+        { path: '/api/referrals/tree', needsAuth: true },
+        { path: '/api/referrals/activity-stats', needsAuth: true }
     ];
     
     const results = [];
@@ -92,28 +93,32 @@ async function testLoad() {
     for (const endpoint of endpoints) {
         const startTime = Date.now();
         try {
-            const response = await makeRequest(`${BASE_URL}${endpoint}`);
+            const options = endpoint.needsAuth ? {
+                headers: { 'x-api-key': API_READONLY_KEY }
+            } : {};
+            
+            const response = await makeRequest(`${BASE_URL}${endpoint.path}`, options);
             const responseTime = Date.now() - startTime;
             
             results.push({
-                endpoint,
+                endpoint: endpoint.path,
                 status: response.statusCode,
                 responseTime,
                 success: response.statusCode < 400
             });
             
-            console.log(`✅ ${endpoint}: ${response.statusCode} (${responseTime}ms)`);
+            console.log(`✅ ${endpoint.path}: ${response.statusCode} (${responseTime}ms)`);
         } catch (error) {
             const responseTime = Date.now() - startTime;
             results.push({
-                endpoint,
+                endpoint: endpoint.path,
                 status: 'ERROR',
                 responseTime,
                 success: false,
                 error: error.message
             });
             
-            console.log(`❌ ${endpoint}: ERROR (${responseTime}ms) - ${error.message}`);
+            console.log(`❌ ${endpoint.path}: ERROR (${responseTime}ms) - ${error.message}`);
         }
     }
     

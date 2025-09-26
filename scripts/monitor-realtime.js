@@ -10,6 +10,7 @@ import http from 'http';
 
 const BASE_URL = 'https://projects.inetskills.ru';
 const UPDATE_INTERVAL = 30000; // 30 секунд
+const API_READONLY_KEY = 'YdbX9WekeVLzRDbwrgeR+90W2rFE0Q60KzBwg7aP/P0='; // Readonly API ключ
 
 // Функция для выполнения HTTP запросов
 function makeRequest(url, options = {}) {
