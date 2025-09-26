@@ -346,10 +346,16 @@ async function updateStats() {
 
 	// Загружаем статистику активности с сервера
 	try {
-		// Определяем URL для загрузки статистики активности
-		const statsApiUrl = userReferalId ? `/api/referrals/${userReferalId}/activity-stats` : '/api/referrals/activity-stats';
+		// Определяем URL для загрузки статистики активности (используем readonly API)
+		const statsApiUrl = userReferalId ? `/api/readonly/referrals/${userReferalId}/activity-stats` : '/api/readonly/referrals/activity-stats';
 
-		const response = await fetch(statsApiUrl);
+		// Добавляем API ключ для readonly доступа
+		const headers = {
+			'x-api-key': 'ZDd1/oQLS2BxsFhfA7f012ArXCr0fByy6jlH1JXH7bs=',
+			'Content-Type': 'application/json'
+		};
+
+		const response = await fetch(statsApiUrl, { headers });
 		const result = await response.json();
 
 		if (result.status && result.data) {
@@ -492,10 +498,16 @@ function setupExpandControls() {
 // Функция для загрузки данных
 async function loadReferralData() {
 	try {
-		// Определяем URL для загрузки данных
-		const apiUrl = userReferalId ? `/api/referrals/${userReferalId}/tree` : '/api/referrals/tree';
+		// Определяем URL для загрузки данных (используем readonly API)
+		const apiUrl = userReferalId ? `/api/readonly/referrals/${userReferalId}/tree` : '/api/readonly/referrals/tree';
 
-		const response = await fetch(apiUrl);
+		// Добавляем API ключ для readonly доступа
+		const headers = {
+			'x-api-key': 'ZDd1/oQLS2BxsFhfA7f012ArXCr0fByy6jlH1JXH7bs=',
+			'Content-Type': 'application/json'
+		};
+
+		const response = await fetch(apiUrl, { headers });
 		if (!response.ok) {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}

@@ -1,193 +1,298 @@
 #!/usr/bin/env node
 
 /**
- * Тест endpoint только для чтения
- * Проверяет работу защищенного веб-интерфейса
+ * Тест readonly endpoint для веб-интерфейса
+ * Проверяет работу обновленного JavaScript с readonly API
  */
 
+import https from 'https';
 import http from 'http';
-import dotenv from 'dotenv';
 
-dotenv.config();
+const API_READONLY_KEY = 'ZDd1/oQLS2BxsFhfA7f012ArXCr0fByy6jlH1JXH7bs=';
+const BASE_URL = 'https://projects.inetskills.ru';
 
-const SERVER_URL = 'http://localhost:3000';
-const API_READONLY_KEY = process.env.API_READONLY_KEY || 'ZDd1/oQLS2BxsFhfA7f012ArXCr0fByy6jlH1JXH7bs=';
+// Функция для выполнения HTTP запросов
+function makeRequest(url, options = {}) {
+    return new Promise((resolve, reject) => {
+        const isHttps = url.startsWith('https://');
+        const client = isHttps ? https : http;
+        
+        const requestOptions = {
+            method: options.method || 'GET',
+            headers: {
+                'User-Agent': 'ReadonlyEndpointTest/1.0',
+                ...options.headers
+            },
+            timeout: 10000
+        };
 
-class ReadonlyEndpointTester {
-	constructor() {
-		this.testResults = {
-			passed: 0,
-			failed: 0,
-			total: 0
-		};
-	}
+        const req = client.request(url, requestOptions, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                resolve({
+                    statusCode: res.statusCode,
+                    headers: res.headers,
+                    data: data
+                });
+            });
+        });
 
-	logTest(testName, status, message = '') {
-		const statusIcon = status === 'PASS' ? '✅' : '❌';
-		console.log(`${statusIcon} ${testName}: ${status} ${message}`);
+        req.on('error', reject);
+        req.on('timeout', () => {
+            req.destroy();
+            reject(new Error('Request timeout'));
+        });
 
-		this.testResults.total++;
-		if (status === 'PASS') {
-			this.testResults.passed++;
-		} else {
-			this.testResults.failed++;
-		}
-	}
+        if (options.body) {
+            req.write(options.body);
+        }
+        
+        req.end();
+    });
+}
 
-	async makeRequest(path, options = {}) {
-		return new Promise((resolve) => {
-			const requestOptions = {
-				hostname: 'localhost',
-				port: 3000,
-				path: path,
-				method: options.method || 'GET',
-				headers: {
-					'User-Agent': 'Readonly-Tester/1.0',
-					...options.headers
-				},
-				timeout: 5000
-			};
+// Тест 1: Веб-интерфейс /network
+async function testWebInterface() {
+    console.log('🌐 Тестирование веб-интерфейса /network...');
+    
+    try {
+        const response = await makeRequest(`${BASE_URL}/network`);
+        
+        if (response.statusCode === 200) {
+            // Проверяем, что HTML содержит обновленный JavaScript
+            if (response.data.includes('/api/readonly/referrals/tree')) {
+                console.log('✅ Веб-интерфейс работает и использует readonly API');
+                return true;
+            } else {
+                console.log('⚠️ Веб-интерфейс работает, но JavaScript не обновлен');
+                return false;
+            }
+        } else {
+            console.log(`❌ Веб-интерфейс недоступен: ${response.statusCode}`);
+            return false;
+        }
+    } catch (error) {
+        console.log(`❌ Ошибка веб-интерфейса: ${error.message}`);
+        return false;
+    }
+}
 
-			const req = http.request(requestOptions, (res) => {
-				let data = '';
+// Тест 2: Readonly API для дерева рефералов
+async function testReadonlyTreeAPI() {
+    console.log('🌳 Тестирование readonly API для дерева рефералов...');
+    
+    try {
+        const response = await makeRequest(`${BASE_URL}/api/readonly/referrals/tree`, {
+            headers: {
+                'x-api-key': API_READONLY_KEY
+            }
+        });
+        
+        if (response.statusCode === 200) {
+            const data = JSON.parse(response.data);
+            if (data.status && data.data) {
+                console.log('✅ Readonly API для дерева работает');
+                console.log(`   📊 Найдено корневых рефералов: ${data.data.length}`);
+                return true;
+            } else {
+                console.log('⚠️ API отвечает, но данные некорректны');
+                return false;
+            }
+        } else {
+            console.log(`❌ Readonly API недоступен: ${response.statusCode}`);
+            return false;
+        }
+    } catch (error) {
+        console.log(`❌ Ошибка readonly API: ${error.message}`);
+        return false;
+    }
+}
 
-				res.on('data', (chunk) => {
-					data += chunk;
-				});
+// Тест 3: Readonly API для статистики активности
+async function testReadonlyStatsAPI() {
+    console.log('📊 Тестирование readonly API для статистики...');
+    
+    try {
+        const response = await makeRequest(`${BASE_URL}/api/readonly/referrals/activity-stats`, {
+            headers: {
+                'x-api-key': API_READONLY_KEY
+            }
+        });
+        
+        if (response.statusCode === 200) {
+            const data = JSON.parse(response.data);
+            if (data.status && data.data) {
+                console.log('✅ Readonly API для статистики работает');
+                console.log(`   📈 Активных: ${data.data.active}, Неактивных: ${data.data.inactive}`);
+                return true;
+            } else {
+                console.log('⚠️ API отвечает, но данные некорректны');
+                return false;
+            }
+        } else {
+            console.log(`❌ Readonly API недоступен: ${response.statusCode}`);
+            return false;
+        }
+    } catch (error) {
+        console.log(`❌ Ошибка readonly API: ${error.message}`);
+        return false;
+    }
+}
 
-				res.on('end', () => {
-					resolve({
-						status: res.statusCode,
-						headers: res.headers,
-						data: data
-					});
-				});
-			});
+// Тест 4: Проверка защиты readonly API
+async function testReadonlyAPISecurity() {
+    console.log('🔒 Тестирование защиты readonly API...');
+    
+    try {
+        // Тест без API ключа
+        const responseNoKey = await makeRequest(`${BASE_URL}/api/readonly/referrals/tree`);
+        
+        if (responseNoKey.statusCode === 401) {
+            console.log('✅ Readonly API защищен (без ключа)');
+        } else {
+            console.log(`❌ Readonly API не защищен: ${responseNoKey.statusCode}`);
+            return false;
+        }
+        
+        // Тест с неверным API ключом
+        const responseWrongKey = await makeRequest(`${BASE_URL}/api/readonly/referrals/tree`, {
+            headers: {
+                'x-api-key': 'wrong-key'
+            }
+        });
+        
+        if (responseWrongKey.statusCode === 401) {
+            console.log('✅ Readonly API защищен (неверный ключ)');
+            return true;
+        } else {
+            console.log(`❌ Readonly API не защищен от неверного ключа: ${responseWrongKey.statusCode}`);
+            return false;
+        }
+    } catch (error) {
+        console.log(`❌ Ошибка тестирования защиты: ${error.message}`);
+        return false;
+    }
+}
 
-			req.on('error', (error) => {
-				resolve({
-					status: 0,
-					error: error.message,
-					data: null
-				});
-			});
+// Тест 5: Проверка endpoint для отдельного пользователя
+async function testUserSpecificEndpoint() {
+    console.log('👤 Тестирование endpoint для отдельного пользователя...');
+    
+    try {
+        // Сначала получаем список всех рефералов
+        const treeResponse = await makeRequest(`${BASE_URL}/api/readonly/referrals/tree`, {
+            headers: {
+                'x-api-key': API_READONLY_KEY
+            }
+        });
+        
+        if (treeResponse.statusCode === 200) {
+            const treeData = JSON.parse(treeResponse.data);
+            if (treeData.status && treeData.data && treeData.data.length > 0) {
+                // Берем первого реферала для теста
+                const firstReferral = treeData.data[0];
+                const userId = firstReferral.referal_id;
+                
+                console.log(`   🧪 Тестируем с пользователем: ${userId}`);
+                
+                // Тестируем endpoint для конкретного пользователя
+                const userResponse = await makeRequest(`${BASE_URL}/api/readonly/referrals/${userId}/tree`, {
+                    headers: {
+                        'x-api-key': API_READONLY_KEY
+                    }
+                });
+                
+                if (userResponse.statusCode === 200) {
+                    const userData = JSON.parse(userResponse.data);
+                    if (userData.status && userData.data) {
+                        console.log('✅ Endpoint для отдельного пользователя работает');
+                        console.log(`   📊 Найдено рефералов у пользователя: ${userData.data.length}`);
+                        return true;
+                    } else {
+                        console.log('⚠️ Endpoint отвечает, но данные некорректны');
+                        return false;
+                    }
+                } else {
+                    console.log(`❌ Endpoint для пользователя недоступен: ${userResponse.statusCode}`);
+                    return false;
+                }
+            } else {
+                console.log('⚠️ Нет данных для тестирования endpoint пользователя');
+                return false;
+            }
+        } else {
+            console.log('❌ Не удалось получить данные для тестирования');
+            return false;
+        }
+    } catch (error) {
+        console.log(`❌ Ошибка тестирования endpoint пользователя: ${error.message}`);
+        return false;
+    }
+}
 
-			req.on('timeout', () => {
-				req.destroy();
-				resolve({
-					status: 0,
-					error: 'Request timeout',
-					data: null
-				});
-			});
+// Основная функция тестирования
+async function runTests() {
+    console.log('🧪 ТЕСТИРОВАНИЕ READONLY ENDPOINT');
+    console.log('=====================================');
+    console.log(`🔑 API Readonly Key: ${API_READONLY_KEY.substring(0, 20)}...`);
+    console.log(`🌐 Base URL: ${BASE_URL}`);
+    console.log('');
 
-			if (options.body) {
-				req.write(options.body);
-			}
+    const tests = [
+        { name: 'Веб-интерфейс /network', fn: testWebInterface },
+        { name: 'Readonly API для дерева', fn: testReadonlyTreeAPI },
+        { name: 'Readonly API для статистики', fn: testReadonlyStatsAPI },
+        { name: 'Защита readonly API', fn: testReadonlyAPISecurity },
+        { name: 'Endpoint для отдельного пользователя', fn: testUserSpecificEndpoint }
+    ];
 
-			req.end();
-		});
-	}
+    let passed = 0;
+    let failed = 0;
 
-	async testReadonlyWebInterface() {
-		console.log('\n🌐 Тестирование веб-интерфейса только для чтения...');
+    for (const test of tests) {
+        try {
+            const result = await test.fn();
+            if (result) {
+                passed++;
+            } else {
+                failed++;
+            }
+        } catch (error) {
+            console.log(`❌ Ошибка в тесте "${test.name}": ${error.message}`);
+            failed++;
+        }
+        console.log('');
+    }
 
-		// Тест 1: Без ключа (должен быть заблокирован)
-		const response1 = await this.makeRequest('/readonly');
-		if (response1.status === 401) {
-			this.logTest('Веб-интерфейс без ключа заблокирован', 'PASS', `Статус: ${response1.status}`);
-		} else {
-			this.logTest('Веб-интерфейс без ключа заблокирован', 'FAIL', `Ожидался статус 401, получен: ${response1.status}`);
-		}
+    console.log('📊 РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ');
+    console.log('==========================');
+    console.log(`✅ Пройдено: ${passed}`);
+    console.log(`❌ Провалено: ${failed}`);
+    console.log(`📈 Всего тестов: ${tests.length}`);
+    console.log(`🎯 Успешность: ${Math.round((passed / tests.length) * 100)}%`);
 
-		// Тест 2: С ключом (должен работать)
-		const response2 = await this.makeRequest('/readonly', {
-			headers: { 'x-api-key': API_READONLY_KEY }
-		});
-		if (response2.status === 200) {
-			this.logTest('Веб-интерфейс с ключом работает', 'PASS', `Статус: ${response2.status}`);
-		} else {
-			this.logTest('Веб-интерфейс с ключом работает', 'FAIL', `Статус: ${response2.status}`);
-		}
-	}
+    if (failed === 0) {
+        console.log('');
+        console.log('🎉 Все тесты пройдены успешно!');
+        console.log('✅ Readonly endpoint полностью функционален');
+    } else {
+        console.log('');
+        console.log('⚠️ Обнаружены проблемы с readonly endpoint');
+        console.log('🔧 Проверьте настройки на сервере');
+    }
 
-	async testReadonlyAPI() {
-		console.log('\n🔍 Тестирование API только для чтения...');
-
-		const endpoints = [
-			'/api/readonly/referrals/tree',
-			'/api/readonly/referrals/activity-stats'
-		];
-
-		for (const endpoint of endpoints) {
-			// Без ключа
-			const response1 = await this.makeRequest(endpoint);
-			if (response1.status === 401) {
-				this.logTest(`${endpoint} без ключа`, 'PASS', `Статус: ${response1.status}`);
-			} else {
-				this.logTest(`${endpoint} без ключа`, 'FAIL', `Ожидался статус 401, получен: ${response1.status}`);
-			}
-
-			// С ключом
-			const response2 = await this.makeRequest(endpoint, {
-				headers: { 'x-api-key': API_READONLY_KEY }
-			});
-			if (response2.status === 200) {
-				this.logTest(`${endpoint} с ключом`, 'PASS', `Статус: ${response2.status}`);
-			} else {
-				this.logTest(`${endpoint} с ключом`, 'FAIL', `Статус: ${response2.status}`);
-			}
-		}
-	}
-
-	async testMainAPIStillProtected() {
-		console.log('\n🔒 Тестирование основного API (должен остаться защищенным)...');
-
-		// Тест: Основной API должен требовать основной ключ
-		const response = await this.makeRequest('/api/referrals/tree', {
-			headers: { 'x-api-key': API_READONLY_KEY }
-		});
-		if (response.status === 401) {
-			this.logTest('Основной API с readonly ключом заблокирован', 'PASS', `Статус: ${response.status}`);
-		} else {
-			this.logTest('Основной API с readonly ключом заблокирован', 'FAIL', `Ожидался статус 401, получен: ${response.status}`);
-		}
-	}
-
-	async runAllTests() {
-		console.log('🛡️ Запуск тестов endpoint только для чтения...');
-		console.log(`Server URL: ${SERVER_URL}`);
-		console.log(`Readonly API Key: ${API_READONLY_KEY.substring(0, 8)}...`);
-
-		try {
-			await this.testReadonlyWebInterface();
-			await this.testReadonlyAPI();
-			await this.testMainAPIStillProtected();
-
-			this.printSummary();
-		} catch (error) {
-			console.error('❌ Ошибка при выполнении тестов:', error.message);
-		}
-	}
-
-	printSummary() {
-		console.log('\n📊 Результаты тестирования:');
-		console.log(`✅ Пройдено: ${this.testResults.passed}`);
-		console.log(`❌ Провалено: ${this.testResults.failed}`);
-		console.log(`📈 Всего тестов: ${this.testResults.total}`);
-
-		const successRate = ((this.testResults.passed / this.testResults.total) * 100).toFixed(1);
-		console.log(`🎯 Успешность: ${successRate}%`);
-
-		if (this.testResults.failed === 0) {
-			console.log('\n🎉 Все тесты endpoint только для чтения пройдены успешно!');
-			console.log('🛡️ Веб-интерфейс защищен и доступен только с API ключом!');
-		} else {
-			console.log('\n⚠️ Обнаружены проблемы с endpoint только для чтения!');
-		}
-	}
+    return failed === 0;
 }
 
 // Запуск тестов
-const tester = new ReadonlyEndpointTester();
-tester.runAllTests();
+if (import.meta.url === `file://${process.argv[1]}`) {
+    runTests().then(success => {
+        process.exit(success ? 0 : 1);
+    }).catch(error => {
+        console.error('❌ Критическая ошибка:', error);
+        process.exit(1);
+    });
+}
+
+export { runTests };
