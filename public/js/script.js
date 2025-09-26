@@ -337,75 +337,93 @@ function renderTable(data = null) {
 	setTimeout(updateTreeLines, 10);
 }
 
-// Функция для обновления статистики
-async function updateStats() {
-	const totalReferralsCount = referralData.length;
-	const maxLevelsCount = Math.max(...referralData.map(item => item.level)) + 1;
-
-	// Находим последнюю дату регистрации
-	const lastRegDate = referralData
-		.filter(item => item.reg_date)
-		.sort((a, b) => new Date(b.reg_date) - new Date(a.reg_date))[0];
-
-	// Загружаем статистику активности с сервера
-	try {
-		// Проверяем, не слишком ли часто делаем запросы
-		const now = Date.now();
-		if (now - lastRequestTime < REQUEST_DELAY) {
-			console.log('Статистика: запрос заблокирован: слишком частые запросы');
-			// Используем fallback статистику
-			const activeReferralsCount = referralData.filter(item => item.referal_nickname).length;
-			document.getElementById('activeReferrals').textContent = activeReferralsCount;
-			document.getElementById('inactiveReferrals').textContent = totalReferralsCount - activeReferralsCount;
-			return;
-		}
-		lastRequestTime = now;
-
-		// Определяем URL для загрузки статистики активности (используем readonly API)
-		const statsApiUrl = userReferalId ? `/api/readonly/referrals/${userReferalId}/activity-stats` : '/api/readonly/referrals/activity-stats';
-
-		// Добавляем API ключ для readonly доступа
-		const headers = {
-			'x-api-key': API_READONLY_KEY,
-			'Content-Type': 'application/json'
-		};
-
-		const response = await fetch(statsApiUrl, { headers });
-		if (!response.ok) {
-			if (response.status === 429) {
-				console.log('Статистика: Rate limit exceeded, using fallback');
-				// Используем fallback статистику
-				const activeReferralsCount = referralData.filter(item => item.referal_nickname).length;
-				document.getElementById('activeReferrals').textContent = activeReferralsCount;
-				document.getElementById('inactiveReferrals').textContent = totalReferralsCount - activeReferralsCount;
-				return;
-			}
-			throw new Error(`HTTP error! status: ${response.status}`);
-		}
-		const result = await response.json();
-
-		if (result.status && result.data) {
-			document.getElementById('activeReferrals').textContent = result.data.active;
-			document.getElementById('inactiveReferrals').textContent = result.data.inactive;
-		} else {
-			// Fallback: считаем активными тех, у кого есть никнейм
-			const activeReferralsCount = referralData.filter(item => item.referal_nickname).length;
-			document.getElementById('activeReferrals').textContent = activeReferralsCount;
-			document.getElementById('inactiveReferrals').textContent = totalReferralsCount - activeReferralsCount;
-		}
-	} catch (error) {
-		console.error('Ошибка загрузки статистики активности:', error);
-		// Fallback: считаем активными тех, у кого есть никнейм
-		const activeReferralsCount = referralData.filter(item => item.referal_nickname).length;
-		document.getElementById('activeReferrals').textContent = activeReferralsCount;
-		document.getElementById('inactiveReferrals').textContent = totalReferralsCount - activeReferralsCount;
+// Функция для расчета статистики активности по таблице
+function calculateActivityStats() {
+	if (!referralData || referralData.length === 0) {
+		return { active: 0, inactive: 0 };
 	}
 
-	document.getElementById('totalReferrals').textContent = totalReferralsCount;
-	document.getElementById('maxLevels').textContent = maxLevelsCount;
-	document.getElementById('lastRegistration').textContent = lastRegDate ? formatDate(lastRegDate.reg_date) : '—';
+	let activeCount = 0;
+	let inactiveCount = 0;
 
-	document.getElementById('statsBar').style.display = 'flex';
+	referralData.forEach(item => {
+		// Улучшенная логика определения активности:
+		// 1. Есть никнейм И активность в канале (более строгий критерий)
+		// 2. ИЛИ есть потомки (показатель активности в реферальной программе)
+		const hasNickname = item.referal_nickname && item.referal_nickname.trim() !== '';
+		const hasChannelActivity = item.channel_activity &&
+			item.channel_activity !== 'Неактивен' &&
+			item.channel_activity !== '—' &&
+			item.channel_activity.trim() !== '';
+		const hasChildren = item.totalReferals && item.totalReferals > 0;
+
+		// Считаем активным, если:
+		// - Есть никнейм И активность в канале (полная активность)
+		// - ИЛИ есть потомки (активность в реферальной программе)
+		if ((hasNickname && hasChannelActivity) || hasChildren) {
+			activeCount++;
+		} else {
+			inactiveCount++;
+		}
+	});
+
+	console.log(`📊 Расчет активности: ${activeCount} активных, ${inactiveCount} неактивных из ${referralData.length} всего`);
+	return { active: activeCount, inactive: inactiveCount };
+}
+
+// Функция для обновления статистики
+function updateStats() {
+	console.log('📊 Обновление статистики...');
+
+	if (!referralData || referralData.length === 0) {
+		console.log('⚠️ Нет данных для расчета статистики');
+		document.getElementById('statsBar').style.display = 'none';
+		return;
+	}
+
+	try {
+		// Рассчитываем все показатели по таблице
+		const totalReferralsCount = referralData.length;
+		const maxLevelsCount = referralData.length > 0 ? Math.max(...referralData.map(item => item.level)) + 1 : 0;
+
+		// Находим последнюю дату регистрации
+		const lastRegDate = referralData
+			.filter(item => item.reg_date)
+			.sort((a, b) => new Date(b.reg_date) - new Date(a.reg_date))[0];
+
+		// Рассчитываем активность по таблице
+		const activityStats = calculateActivityStats();
+
+		// Обновляем DOM элементы
+		document.getElementById('totalReferrals').textContent = totalReferralsCount;
+		document.getElementById('activeReferrals').textContent = activityStats.active;
+		document.getElementById('inactiveReferrals').textContent = activityStats.inactive;
+		document.getElementById('maxLevels').textContent = maxLevelsCount;
+		document.getElementById('lastRegistration').textContent = lastRegDate ? formatDate(lastRegDate.reg_date) : '—';
+
+		// Показываем блок статистики
+		document.getElementById('statsBar').style.display = 'flex';
+
+		console.log('✅ Статистика обновлена:', {
+			total: totalReferralsCount,
+			active: activityStats.active,
+			inactive: activityStats.inactive,
+			levels: maxLevelsCount,
+			lastReg: lastRegDate ? formatDate(lastRegDate.reg_date) : '—'
+		});
+
+	} catch (error) {
+		console.error('❌ Ошибка при обновлении статистики:', error);
+
+		// Fallback: показываем базовую статистику
+		document.getElementById('totalReferrals').textContent = referralData.length;
+		document.getElementById('activeReferrals').textContent = '—';
+		document.getElementById('inactiveReferrals').textContent = '—';
+		document.getElementById('maxLevels').textContent = '—';
+		document.getElementById('lastRegistration').textContent = '—';
+
+		document.getElementById('statsBar').style.display = 'flex';
+	}
 }
 
 // Функции поиска
@@ -527,17 +545,33 @@ const REQUEST_DELAY = 1000; // 1 секунда между запросами
 
 // Функция для загрузки данных
 async function loadReferralData() {
+	console.log('🔄 Загрузка данных рефералов...');
+
 	try {
 		// Проверяем, не слишком ли часто делаем запросы
 		const now = Date.now();
 		if (now - lastRequestTime < REQUEST_DELAY) {
-			console.log('Запрос заблокирован: слишком частые запросы');
+			console.log('⏱️ Запрос заблокирован: слишком частые запросы');
 			return;
 		}
 		lastRequestTime = now;
 
 		// Определяем URL для загрузки данных (используем readonly API)
 		const apiUrl = userReferalId ? `/api/readonly/referrals/${userReferalId}/tree` : '/api/readonly/referrals/tree';
+		console.log(`🌐 Запрос к API: ${apiUrl}`);
+
+		// Проверяем наличие API ключа
+		if (!API_READONLY_KEY) {
+			console.error('❌ API_READONLY_KEY не найден в мета-тегах');
+			document.getElementById('tableBody').innerHTML = `
+				<tr>
+					<td colspan="6" class="error">
+						Ошибка конфигурации: API ключ не найден
+					</td>
+				</tr>
+			`;
+			return;
+		}
 
 		// Добавляем API ключ для readonly доступа
 		const headers = {
@@ -545,28 +579,46 @@ async function loadReferralData() {
 			'Content-Type': 'application/json'
 		};
 
+		console.log('🔑 Отправка запроса с API ключом...');
 		const response = await fetch(apiUrl, { headers });
+
+		console.log(`📡 Ответ сервера: ${response.status} ${response.statusText}`);
+
 		if (!response.ok) {
 			if (response.status === 429) {
-				console.log('Rate limit exceeded, waiting...');
+				console.log('⏳ Rate limit exceeded, waiting...');
 				// Ждем 5 секунд перед повторной попыткой
 				await new Promise(resolve => setTimeout(resolve, 5000));
+				return;
+			} else if (response.status === 401) {
+				console.error('🔒 Ошибка аутентификации: неверный API ключ');
+				document.getElementById('tableBody').innerHTML = `
+					<tr>
+						<td colspan="6" class="error">
+							Ошибка аутентификации: проверьте API ключ
+						</td>
+					</tr>
+				`;
 				return;
 			}
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
+
 		const data = await response.json();
+		console.log('📊 Получены данные:', data);
 
 		if (data.status && data.data && data.data.length > 0) {
 			// Преобразуем дерево в плоский список с уровнями
 			referralData = flattenTree(data.data);
+			console.log(`✅ Загружено ${referralData.length} рефералов`);
 
 			// Рендерим таблицу
 			renderTable();
 
 			// Обновляем статистику
-			await updateStats();
+			updateStats();
 		} else {
+			console.log('📭 Нет данных для отображения');
 			document.getElementById('tableBody').innerHTML = `
                 <tr>
                     <td colspan="6" class="error">
@@ -574,9 +626,11 @@ async function loadReferralData() {
                     </td>
                 </tr>
             `;
+			// Скрываем статистику если нет данных
+			document.getElementById('statsBar').style.display = 'none';
 		}
 	} catch (error) {
-		console.error('Ошибка загрузки данных:', error);
+		console.error('❌ Ошибка загрузки данных:', error);
 		document.getElementById('tableBody').innerHTML = `
             <tr>
                 <td colspan="6" class="error">
@@ -584,6 +638,8 @@ async function loadReferralData() {
                 </td>
             </tr>
         `;
+		// Скрываем статистику при ошибке
+		document.getElementById('statsBar').style.display = 'none';
 	}
 }
 
@@ -591,7 +647,12 @@ async function loadReferralData() {
 async function refreshTable() {
 	const refreshBtn = document.getElementById('refreshBtn');
 
-	if (!refreshBtn) return;
+	if (!refreshBtn) {
+		console.error('❌ Кнопка обновления не найдена');
+		return;
+	}
+
+	console.log('🔄 Обновление таблицы...');
 
 	// Показываем состояние загрузки
 	refreshBtn.classList.add('loading');
@@ -601,6 +662,9 @@ async function refreshTable() {
 		// Очищаем текущие данные
 		referralData = [];
 		expandedNodes.clear();
+
+		// Скрываем статистику во время загрузки
+		document.getElementById('statsBar').style.display = 'none';
 
 		// Показываем индикатор загрузки
 		document.getElementById('tableBody').innerHTML = `
@@ -615,8 +679,10 @@ async function refreshTable() {
 		// Загружаем новые данные
 		await loadReferralData();
 
+		console.log('✅ Таблица обновлена');
+
 	} catch (error) {
-		console.error('Ошибка обновления данных:', error);
+		console.error('❌ Ошибка обновления данных:', error);
 		document.getElementById('tableBody').innerHTML = `
 			<tr>
 				<td colspan="6" class="error">
@@ -624,6 +690,8 @@ async function refreshTable() {
 				</td>
 			</tr>
 		`;
+		// Скрываем статистику при ошибке
+		document.getElementById('statsBar').style.display = 'none';
 	} finally {
 		// Убираем состояние загрузки
 		refreshBtn.classList.remove('loading');
@@ -643,8 +711,48 @@ function setupRefreshButton() {
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', function () {
-	loadReferralData();
+	console.log('🚀 Инициализация приложения...');
+
+	// Проверяем наличие необходимых элементов
+	const statsBar = document.getElementById('statsBar');
+	const tableBody = document.getElementById('tableBody');
+	const searchInput = document.getElementById('searchInput');
+	const refreshBtn = document.getElementById('refreshBtn');
+
+	if (!statsBar) {
+		console.error('❌ Элемент statsBar не найден');
+	}
+	if (!tableBody) {
+		console.error('❌ Элемент tableBody не найден');
+	}
+	if (!searchInput) {
+		console.error('❌ Элемент searchInput не найден');
+	}
+	if (!refreshBtn) {
+		console.error('❌ Элемент refreshBtn не найден');
+	}
+
+	// Проверяем API ключ
+	if (!API_READONLY_KEY) {
+		console.warn('⚠️ API_READONLY_KEY не найден в мета-тегах');
+	} else {
+		console.log('🔑 API ключ найден:', API_READONLY_KEY.substring(0, 10) + '...');
+	}
+
+	// Проверяем userReferalId
+	if (userReferalId) {
+		console.log('👤 Загружаем данные для пользователя:', userReferalId);
+	} else {
+		console.log('🌐 Загружаем общие данные рефералов');
+	}
+
+	// Инициализируем компоненты
 	setupSearch();
 	setupExpandControls();
 	setupRefreshButton();
+
+	// Загружаем данные
+	loadReferralData();
+
+	console.log('✅ Инициализация завершена');
 });
