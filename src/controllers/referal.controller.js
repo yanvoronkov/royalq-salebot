@@ -12,7 +12,29 @@ class ReferalController {
 	 */
 	async createReferal(req, res, next) {
 		try {
+			// Детальное логирование для диагностики Salebot
+			console.log('🔍 Salebot API Request Debug:');
+			console.log('  Headers:', JSON.stringify(req.headers, null, 2));
+			console.log('  Body:', JSON.stringify(req.body, null, 2));
+			console.log('  Body type:', typeof req.body);
+			console.log('  Body keys:', req.body ? Object.keys(req.body) : 'null/undefined');
+			console.log('  Content-Type:', req.get('Content-Type'));
+			console.log('  User-Agent:', req.get('User-Agent'));
+			console.log('  IP:', req.ip);
+			console.log('  Timestamp:', new Date().toISOString());
+			console.log('---');
+
 			const referalData = req.body; // Получаем данные реферала из тела запроса
+			
+			// Дополнительная проверка на пустое тело
+			if (!referalData || Object.keys(referalData).length === 0) {
+				console.error('❌ Empty request body received from Salebot');
+				const error = new Error('Empty request body - check Salebot configuration');
+				error.statusCode = 400;
+				error.code = 'EMPTY_BODY';
+				throw error;
+			}
+
 			const createdReferal = await referalService.createReferal(referalData); // Вызываем сервис для создания реферала
 			res.status(201).json({ message: 'Referal created successfully', data: createdReferal }); // Отправляем успешный ответ с кодом 201 (Created) и данными
 		} catch (error) {

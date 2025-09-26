@@ -28,6 +28,17 @@ const errorHandler = (err, req, res, next) => {
 		});
 	}
 
+	// Обрабатываем ошибку пустого тела запроса
+	if (err.code === 'EMPTY_BODY') {
+		return res.status(400).json({
+			error: {
+				message: err.message,
+				code: 'EMPTY_BODY',
+				hint: 'Check Salebot configuration - request body is empty'
+			}
+		});
+	}
+
 	// Обрабатываем ошибки валидации Mongoose
 	if (err.name === 'ValidationError') {
 		const errors = Object.values(err.errors).map(e => e.message);
