@@ -349,6 +349,18 @@ async function updateStats() {
 
 	// Загружаем статистику активности с сервера
 	try {
+		// Проверяем, не слишком ли часто делаем запросы
+		const now = Date.now();
+		if (now - lastRequestTime < REQUEST_DELAY) {
+			console.log('Статистика: запрос заблокирован: слишком частые запросы');
+			// Используем fallback статистику
+			const activeReferralsCount = referralData.filter(item => item.referal_nickname).length;
+			document.getElementById('activeReferrals').textContent = activeReferralsCount;
+			document.getElementById('inactiveReferrals').textContent = totalReferralsCount - activeReferralsCount;
+			return;
+		}
+		lastRequestTime = now;
+
 		// Определяем URL для загрузки статистики активности (используем readonly API)
 		const statsApiUrl = userReferalId ? `/api/readonly/referrals/${userReferalId}/activity-stats` : '/api/readonly/referrals/activity-stats';
 
@@ -359,6 +371,17 @@ async function updateStats() {
 		};
 
 		const response = await fetch(statsApiUrl, { headers });
+		if (!response.ok) {
+			if (response.status === 429) {
+				console.log('Статистика: Rate limit exceeded, using fallback');
+				// Используем fallback статистику
+				const activeReferralsCount = referralData.filter(item => item.referal_nickname).length;
+				document.getElementById('activeReferrals').textContent = activeReferralsCount;
+				document.getElementById('inactiveReferrals').textContent = totalReferralsCount - activeReferralsCount;
+				return;
+			}
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
 		const result = await response.json();
 
 		if (result.status && result.data) {
@@ -498,9 +521,21 @@ function setupExpandControls() {
 	toggleBtn.addEventListener('click', toggleExpandAll);
 }
 
+// Переменная для отслеживания последнего запроса
+let lastRequestTime = 0;
+const REQUEST_DELAY = 1000; // 1 секунда между запросами
+
 // Функция для загрузки данных
 async function loadReferralData() {
 	try {
+		// Проверяем, не слишком ли часто делаем запросы
+		const now = Date.now();
+		if (now - lastRequestTime < REQUEST_DELAY) {
+			console.log('Запрос заблокирован: слишком частые запросы');
+			return;
+		}
+		lastRequestTime = now;
+
 		// Определяем URL для загрузки данных (используем readonly API)
 		const apiUrl = userReferalId ? `/api/readonly/referrals/${userReferalId}/tree` : '/api/readonly/referrals/tree';
 
@@ -512,6 +547,12 @@ async function loadReferralData() {
 
 		const response = await fetch(apiUrl, { headers });
 		if (!response.ok) {
+			if (response.status === 429) {
+				console.log('Rate limit exceeded, waiting...');
+				// Ждем 5 секунд перед повторной попыткой
+				await new Promise(resolve => setTimeout(resolve, 5000));
+				return;
+			}
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 		const data = await response.json();
