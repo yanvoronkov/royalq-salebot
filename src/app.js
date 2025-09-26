@@ -14,6 +14,7 @@ const __dirname = path.dirname(__filename);
 import databaseConfig from './config/database.config.js';
 import errorHandler from './utils/error-handler.js';
 import { webRateLimit } from './middleware/rate-limiter.js';
+import { monitorRequests, getStats } from './middleware/request-monitor.js';
 
 import referalRoutes from './routes/referal.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
@@ -25,6 +26,9 @@ const app = express();
 app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Мониторинг запросов
+app.use(monitorRequests);
 
 // Глобальный rate limiting для веб-интерфейса
 app.use(webRateLimit);
@@ -61,6 +65,9 @@ app.get('/health', (req, res) => {
 		environment: process.env.NODE_ENV || 'development'
 	});
 });
+
+// Статистика и мониторинг
+app.get('/stats', getStats);
 
 // Маршруты
 app.use('/', referalRoutes);

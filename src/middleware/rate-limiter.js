@@ -11,7 +11,7 @@ class RateLimiter {
             this.cleanup();
         }, 60000); // Очистка каждую минуту
     }
-    
+
     cleanup() {
         const now = Date.now();
         for (const [ip, data] of this.requests.entries()) {
@@ -20,11 +20,11 @@ class RateLimiter {
             }
         }
     }
-    
+
     check(ip, maxRequests = 100, windowMs = 15 * 60 * 1000) {
         const now = Date.now();
         const requestData = this.requests.get(ip);
-        
+
         if (!requestData) {
             this.requests.set(ip, {
                 count: 1,
@@ -33,7 +33,7 @@ class RateLimiter {
             });
             return { allowed: true, remaining: maxRequests - 1 };
         }
-        
+
         // Если окно истекло, сбрасываем счетчик
         if (now - requestData.firstRequest > windowMs) {
             this.requests.set(ip, {
@@ -43,21 +43,21 @@ class RateLimiter {
             });
             return { allowed: true, remaining: maxRequests - 1 };
         }
-        
+
         // Увеличиваем счетчик
         requestData.count++;
-        
+
         if (requestData.count > maxRequests) {
-            return { 
-                allowed: false, 
+            return {
+                allowed: false,
                 remaining: 0,
                 resetTime: requestData.firstRequest + windowMs
             };
         }
-        
-        return { 
-            allowed: true, 
-            remaining: maxRequests - requestData.count 
+
+        return {
+            allowed: true,
+            remaining: maxRequests - requestData.count
         };
     }
 }
@@ -74,19 +74,19 @@ export const rateLimit = (options = {}) => {
         message = 'Too many requests from this IP',
         skipSuccessfulRequests = false
     } = options;
-    
+
     return (req, res, next) => {
         const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
-        
+
         const result = rateLimiter.check(clientIP, max, windowMs);
-        
+
         // Добавляем заголовки с информацией о лимитах
         res.set({
             'X-RateLimit-Limit': max,
             'X-RateLimit-Remaining': result.remaining,
             'X-RateLimit-Reset': result.resetTime ? new Date(result.resetTime).toISOString() : undefined
         });
-        
+
         if (!result.allowed) {
             console.log(`Rate limit exceeded for IP: ${clientIP}`);
             return res.status(429).json({
@@ -95,7 +95,7 @@ export const rateLimit = (options = {}) => {
                 retryAfter: result.resetTime ? Math.ceil((result.resetTime - Date.now()) / 1000) : undefined
             });
         }
-        
+
         next();
     };
 };
