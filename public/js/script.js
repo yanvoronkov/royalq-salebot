@@ -9,6 +9,9 @@ let totalReferrals = 0;
 // ID пользователя из URL (если есть)
 const userReferalId = document.querySelector('meta[name="user-referal-id"]')?.content || '';
 
+// API ключ для readonly доступа из переменных окружения
+const API_READONLY_KEY = document.querySelector('meta[name="api-readonly-key"]')?.content || '';
+
 /**
  * Автоматически рассчитывает позицию горизонтальной линии на основе уровня вложенности
  * @param {number} level - Уровень вложенности (0-9)
@@ -351,7 +354,7 @@ async function updateStats() {
 
 		// Добавляем API ключ для readonly доступа
 		const headers = {
-			'x-api-key': 'ZDd1/oQLS2BxsFhfA7f012ArXCr0fByy6jlH1JXH7bs=',
+			'x-api-key': API_READONLY_KEY,
 			'Content-Type': 'application/json'
 		};
 
@@ -503,7 +506,7 @@ async function loadReferralData() {
 
 		// Добавляем API ключ для readonly доступа
 		const headers = {
-			'x-api-key': 'ZDd1/oQLS2BxsFhfA7f012ArXCr0fByy6jlH1JXH7bs=',
+			'x-api-key': API_READONLY_KEY,
 			'Content-Type': 'application/json'
 		};
 

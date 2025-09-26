@@ -10,11 +10,11 @@ dotenv.config();
 export const apiAuth = (req, res, next) => {
     // Получаем API ключ из заголовков или query параметров
     const apiKey = req.headers['x-api-key'] || req.query.api_key;
-    
+
     // Получаем ключи из переменных окружения
     const API_SECRET_KEY = process.env.API_SECRET_KEY;
     const API_READONLY_KEY = process.env.API_READONLY_KEY;
-    
+
     // Проверяем наличие API ключа
     if (!apiKey) {
         return res.status(401).json({
@@ -23,7 +23,7 @@ export const apiAuth = (req, res, next) => {
             hint: 'Add x-api-key header or api_key query parameter'
         });
     }
-    
+
     // Проверяем конфигурацию
     if (!API_SECRET_KEY && !API_READONLY_KEY) {
         console.error('API_SECRET_KEY or API_READONLY_KEY not configured in environment variables');
@@ -32,7 +32,7 @@ export const apiAuth = (req, res, next) => {
             message: 'API authentication not properly configured'
         });
     }
-    
+
     // Проверяем валидность API ключа (принимаем любой из двух ключей)
     if (apiKey === API_SECRET_KEY || apiKey === API_READONLY_KEY) {
         req.api_key_type = (apiKey === API_SECRET_KEY) ? 'full_access' : 'readonly';
@@ -53,10 +53,10 @@ export const apiAuth = (req, res, next) => {
 export const apiAuthWrite = (req, res, next) => {
     // Получаем API ключ из заголовков или query параметров
     const apiKey = req.headers['x-api-key'] || req.query.api_key;
-    
+
     // Получаем основной секретный ключ
     const API_SECRET_KEY = process.env.API_SECRET_KEY;
-    
+
     // Проверяем наличие API ключа
     if (!apiKey) {
         return res.status(401).json({
@@ -65,7 +65,7 @@ export const apiAuthWrite = (req, res, next) => {
             hint: 'Add x-api-key header or api_key query parameter'
         });
     }
-    
+
     // Проверяем конфигурацию
     if (!API_SECRET_KEY) {
         console.error('API_SECRET_KEY not configured in environment variables for write operation');
@@ -74,7 +74,7 @@ export const apiAuthWrite = (req, res, next) => {
             message: 'API write authentication not properly configured'
         });
     }
-    
+
     // Для записи принимаем только основной ключ
     if (apiKey !== API_SECRET_KEY) {
         return res.status(401).json({
@@ -82,7 +82,7 @@ export const apiAuthWrite = (req, res, next) => {
             message: 'Valid API_SECRET_KEY required for write operations'
         });
     }
-    
+
     req.api_key_type = 'full_access';
     console.log(`API write request authenticated from IP: ${req.ip}`);
     next();
@@ -94,12 +94,12 @@ export const apiAuthWrite = (req, res, next) => {
 export const ipWhitelist = (allowedIPs = []) => {
     return (req, res, next) => {
         const clientIP = req.ip || req.connection.remoteAddress;
-        
+
         // Если whitelist пустой, пропускаем все IP
         if (allowedIPs.length === 0) {
             return next();
         }
-        
+
         // Проверяем IP адрес
         if (!allowedIPs.includes(clientIP)) {
             console.log(`Blocked request from unauthorized IP: ${clientIP}`);
@@ -108,7 +108,7 @@ export const ipWhitelist = (allowedIPs = []) => {
                 message: 'Access denied from this IP address'
             });
         }
-        
+
         next();
     };
 };
