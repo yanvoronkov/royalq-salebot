@@ -37,6 +37,7 @@ services:
       SALEBOT_API_KEY: ${SALEBOT_API_KEY}
       # API Security
       API_SECRET_KEY: ${API_SECRET_KEY}
+      API_READONLY_KEY: ${API_READONLY_KEY}
       JWT_SECRET: ${JWT_SECRET}
       SESSION_SECRET: ${SESSION_SECRET}
       # Rate Limiting

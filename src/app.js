@@ -17,6 +17,7 @@ import { webRateLimit } from './middleware/rate-limiter.js';
 
 import referalRoutes from './routes/referal.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
+import readonlyRoutes from './routes/readonly.routes.js';
 
 const app = express();
 
@@ -64,6 +65,7 @@ app.get('/health', (req, res) => {
 // Маршруты
 app.use('/', referalRoutes);
 app.use('/', paymentRoutes);
+app.use('/', readonlyRoutes);
 
 // Обработчик ошибок
 app.use(errorHandler);
