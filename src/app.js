@@ -13,6 +13,7 @@ const __dirname = path.dirname(__filename);
 
 import databaseConfig from './config/database.config.js';
 import errorHandler from './utils/error-handler.js';
+import { webRateLimit } from './middleware/rate-limiter.js';
 
 import referalRoutes from './routes/referal.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
@@ -23,6 +24,11 @@ const app = express();
 app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Глобальный rate limiting для веб-интерфейса
+app.use(webRateLimit);
+
+// Статические файлы
 app.use(express.static(path.join(__dirname, '..', 'public'))); // Поднимаемся на уровень вверх // Теперь __dirname определен!
 
 // Шаблонизатор

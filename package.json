@@ -15,7 +15,9 @@
     "monitor-backend": "node scripts/monitor-backend.js",
     "quick-test": "node scripts/quick-test.js",
     "backup-secure": "node scripts/secure-backup.js create",
-    "backup-list": "node scripts/secure-backup.js list"
+    "backup-list": "node scripts/secure-backup.js list",
+    "test-api-security": "node scripts/test-api-security.js",
+    "test-security": "node scripts/test-security-simple.js"
   },
   "dependencies": {
     "axios": "^1.7.9",
@@ -25,7 +27,8 @@
     "express": "^4.21.2",
     "express-ejs-layouts": "^2.5.1",
     "mongoose": "^8.10.1",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

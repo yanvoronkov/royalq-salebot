@@ -35,6 +35,16 @@ services:
       MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password123}@mongodb:27017/${MONGO_DATABASE:-royalq-salebot}?authSource=admin
       SALEBOT_API_BASE_URL: ${SALEBOT_API_BASE_URL:-https://api.salebot.pro}
       SALEBOT_API_KEY: ${SALEBOT_API_KEY}
+      # API Security
+      API_SECRET_KEY: ${API_SECRET_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      # Rate Limiting
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+      API_RATE_LIMIT_MAX_REQUESTS: ${API_RATE_LIMIT_MAX_REQUESTS:-50}
+      # Security Headers
+      TRUST_PROXY: ${TRUST_PROXY:-true}
     ports:
       - "${APP_PORT:-3000}:3000"
     depends_on:
