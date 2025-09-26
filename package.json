@@ -23,7 +23,8 @@
     "update-security": "./scripts/update-server-security.sh",
     "test-readonly": "node scripts/test-readonly-endpoint.js",
     "analyze-load": "node scripts/analyze-load.js",
-    "monitor-realtime": "node scripts/monitor-realtime.js"
+    "monitor-realtime": "node scripts/monitor-realtime.js",
+    "test-telegram-webapp": "node scripts/test-telegram-webapp.js"
   },
   "dependencies": {
     "axios": "^1.7.9",
