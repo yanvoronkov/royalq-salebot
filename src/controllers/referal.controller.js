@@ -25,7 +25,7 @@ class ReferalController {
 			console.log('---');
 
 			const referalData = req.body; // Получаем данные реферала из тела запроса
-			
+
 			// Дополнительная проверка на пустое тело
 			if (!referalData || Object.keys(referalData).length === 0) {
 				console.error('❌ Empty request body received from Salebot');
@@ -167,16 +167,47 @@ class ReferalController {
 	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
 	 */
 	async getAllReferralsTree(req, res, next) {
+		const startTime = Date.now();
 		try {
+			console.log('📊 Начало загрузки дерева всех рефералов...');
+			
 			// Получаем дерево всех рефералов
 			const referralTrees = await referalService.getAllReferralsTree();
 
+			const executionTime = Date.now() - startTime;
+			console.log(`✅ getAllReferralsTree завершено за ${executionTime}ms, возвращено ${referralTrees.length} корневых рефералов`);
+
 			res.status(200).json({
 				status: true,
-				data: referralTrees
+				data: referralTrees,
+				meta: {
+					count: referralTrees.length,
+					executionTime: executionTime
+				}
 			});
 		} catch (error) {
-			console.error("Error in ReferalController - getAllReferralsTree:", error);
+			const executionTime = Date.now() - startTime;
+			console.error(`❌ Error in ReferalController - getAllReferralsTree (${executionTime}ms):`, error);
+			
+			// Возвращаем ошибку с информацией о времени выполнения
+			const errorResponse = {
+				status: false,
+				error: {
+					message: error.message || 'Ошибка при загрузке дерева рефералов',
+					code: error.code || 'TREE_LOAD_ERROR',
+					executionTime: executionTime
+				}
+			};
+
+			// Если это таймаут или ошибка БД, возвращаем 500
+			if (error.message && (
+				error.message.includes('timeout') || 
+				error.message.includes('Query timeout') ||
+				error.message.includes('connection')
+			)) {
+				return res.status(500).json(errorResponse);
+			}
+
 			next(error);
 		}
 	}
@@ -232,18 +263,49 @@ class ReferalController {
 	 * @param {NextFunction} next - Функция next для передачи ошибок middleware обработки ошибок.
 	 */
 	async getUserReferralsTree(req, res, next) {
+		const startTime = Date.now();
 		try {
 			const referalId = req.params.referalId;
+			console.log(`📊 Начало загрузки дерева рефералов для пользователя: ${referalId}`);
 
 			// Получаем дерево рефералов для конкретного пользователя
 			const referralTree = await referalService.getReferalTree(referalId);
 
+			const executionTime = Date.now() - startTime;
+			console.log(`✅ getUserReferralsTree завершено за ${executionTime}ms для пользователя ${referalId}`);
+
 			res.status(200).json({
 				status: true,
-				data: referralTree
+				data: referralTree,
+				meta: {
+					referalId: referalId,
+					count: referralTree.length,
+					executionTime: executionTime
+				}
 			});
 		} catch (error) {
-			console.error("Error in ReferalController - getUserReferralsTree:", error);
+			const executionTime = Date.now() - startTime;
+			console.error(`❌ Error in ReferalController - getUserReferralsTree (${executionTime}ms):`, error);
+			
+			// Возвращаем ошибку с информацией
+			const errorResponse = {
+				status: false,
+				error: {
+					message: error.message || 'Ошибка при загрузке дерева рефералов пользователя',
+					code: error.code || 'USER_TREE_LOAD_ERROR',
+					executionTime: executionTime
+				}
+			};
+
+			// Если это таймаут или ошибка БД, возвращаем 500
+			if (error.message && (
+				error.message.includes('timeout') || 
+				error.message.includes('Query timeout') ||
+				error.message.includes('connection')
+			)) {
+				return res.status(500).json(errorResponse);
+			}
+
 			next(error);
 		}
 	}

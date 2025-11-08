@@ -333,38 +333,63 @@ class ReferalService {
 	 * @param {string} refererId - refererId, для которого нужно построить дерево.
 	 * @param {number} depth - Максимальная глубина дерева (по умолчанию 10).
 	 * @param {number} currentDepth - Текущая глубина рекурсии (используется внутри функции).
+	 * @param {number} maxBatchSize - Максимальное количество параллельных запросов (по умолчанию 10).
 	 * @returns {Promise<Array>} - Промис, возвращающий массив объектов, представляющих реферальное дерево.
 	 */
-	async getReferalTree(refererId, depth = 10, currentDepth = 1) {
+	async getReferalTree(refererId, depth = 10, currentDepth = 1, maxBatchSize = 10) {
 		if (depth < currentDepth) {
 			return []; // Прекращаем рекурсию, если достигли максимальной глубины
 		}
 
 		try {
-			// Оптимизированный запрос с выбором только нужных полей
+			// Добавляем таймаут для запроса к БД (30 секунд)
 			const referals = await Referal.find({ referer_id: refererId })
 				.sort({ reg_date: 1 })
 				.select('referal_id referer_id reg_date referal_nickname referer_nickname referal_name channel_activity referral_link_url personal_channel_link utm')
-				.lean();
+				.lean()
+				.maxTimeMS(30000); // 30 секунд таймаут MongoDB
 
 			if (referals.length === 0) {
 				return []; // Если нет рефералов, возвращаем пустой массив
 			}
 
-			const tree = []; // Массив для хранения дерева
+			// Ограничиваем количество параллельных запросов для предотвращения перегрузки
+			const tree = [];
+			const batchSize = Math.min(maxBatchSize, referals.length);
 
-			// Параллельно обрабатываем всех рефералов для лучшей производительности
-			const promises = referals.map(async (referal) => {
-				const children = await this.getReferalTree(referal.referal_id, depth, currentDepth + 1);
-				const totalReferals = this.countAllDescendants(children);
-				return { ...referal, children, totalReferals };
-			});
+			// Обрабатываем рефералов батчами
+			for (let i = 0; i < referals.length; i += batchSize) {
+				const batch = referals.slice(i, i + batchSize);
 
-			const results = await Promise.all(promises);
-			return results;
+				const batchPromises = batch.map(async (referal) => {
+					try {
+						const children = await this.getReferalTree(referal.referal_id, depth, currentDepth + 1, maxBatchSize);
+						const totalReferals = this.countAllDescendants(children);
+						return { ...referal, children, totalReferals };
+					} catch (error) {
+						// Если ошибка при получении детей, возвращаем реферала без детей
+						console.error(`Error getting children for referal ${referal.referal_id}:`, error.message);
+						return { ...referal, children: [], totalReferals: 0 };
+					}
+				});
+
+				const batchResults = await Promise.allSettled(batchPromises);
+
+				// Обрабатываем результаты батча
+				batchResults.forEach((result) => {
+					if (result.status === 'fulfilled') {
+						tree.push(result.value);
+					} else {
+						console.error('Error processing referal in batch:', result.reason);
+					}
+				});
+			}
+
+			return tree;
 		} catch (error) {
-			console.error("Error getting referal tree:", error);
-			throw error;
+			console.error(`Error getting referal tree for ${refererId}:`, error.message);
+			// Возвращаем пустой массив вместо выброса ошибки, чтобы не ломать весь запрос
+			return [];
 		}
 	}
 
@@ -391,6 +416,10 @@ class ReferalService {
 	 * @throws {Error} - Если произошла ошибка при построении дерева.
 	 */
 	async getAllReferralsTree() {
+		const startTime = Date.now();
+		const MAX_EXECUTION_TIME = 45000; // 45 секунд максимальное время выполнения
+		const MAX_ROOT_REFERRALS = 50; // Ограничиваем количество корневых рефералов для обработки
+
 		try {
 			// Используем оптимизированный метод для получения корневых рефералов
 			const rootReferrals = await this.getRootReferrals();
@@ -399,18 +428,58 @@ class ReferalService {
 				return [];
 			}
 
-			// Параллельно обрабатываем всех корневых рефералов
-			const promises = rootReferrals.map(async (rootReferral) => {
-				const children = await this.getReferalTree(rootReferral.referal_id);
-				const totalReferals = this.countAllDescendants(children);
-				return { ...rootReferral, children, totalReferals };
-			});
+			// Ограничиваем количество корневых рефералов для предотвращения перегрузки
+			const limitedRootReferrals = rootReferrals.slice(0, MAX_ROOT_REFERRALS);
 
-			const results = await Promise.all(promises);
+			if (rootReferrals.length > MAX_ROOT_REFERRALS) {
+				console.warn(`⚠️ Ограничение: обрабатываем только первые ${MAX_ROOT_REFERRALS} из ${rootReferrals.length} корневых рефералов`);
+			}
+
+			// Обрабатываем корневые рефералы батчами для предотвращения перегрузки
+			const batchSize = 5; // Обрабатываем по 5 корневых рефералов одновременно
+			const results = [];
+
+			for (let i = 0; i < limitedRootReferrals.length; i += batchSize) {
+				// Проверяем, не превышено ли время выполнения
+				if (Date.now() - startTime > MAX_EXECUTION_TIME) {
+					console.warn(`⚠️ Превышено время выполнения запроса. Обработано ${results.length} из ${limitedRootReferrals.length} корневых рефералов`);
+					break;
+				}
+
+				const batch = limitedRootReferrals.slice(i, i + batchSize);
+
+				const batchPromises = batch.map(async (rootReferral) => {
+					try {
+						const children = await this.getReferalTree(rootReferral.referal_id, 10, 1, 10);
+						const totalReferals = this.countAllDescendants(children);
+						return { ...rootReferral, children, totalReferals };
+					} catch (error) {
+						// Если ошибка при получении дерева, возвращаем корневой реферал без детей
+						console.error(`Error getting tree for root referal ${rootReferral.referal_id}:`, error.message);
+						return { ...rootReferral, children: [], totalReferals: 0 };
+					}
+				});
+
+				const batchResults = await Promise.allSettled(batchPromises);
+
+				// Обрабатываем результаты батча
+				batchResults.forEach((result) => {
+					if (result.status === 'fulfilled') {
+						results.push(result.value);
+					} else {
+						console.error('Error processing root referal in batch:', result.reason);
+					}
+				});
+			}
+
+			const executionTime = Date.now() - startTime;
+			console.log(`✅ getAllReferralsTree выполнено за ${executionTime}ms, обработано ${results.length} корневых рефералов`);
+
 			return results;
 		} catch (error) {
 			console.error("Error getting all referrals tree:", error);
-			throw error;
+			// Возвращаем пустой массив вместо выброса ошибки, чтобы клиент получил ответ
+			return [];
 		}
 	}
 

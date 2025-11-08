@@ -542,10 +542,12 @@ function setupExpandControls() {
 // Переменная для отслеживания последнего запроса
 let lastRequestTime = 0;
 const REQUEST_DELAY = 1000; // 1 секунда между запросами
+const MAX_RETRIES = 3; // Максимальное количество попыток
+const RETRY_DELAY = 2000; // Задержка между попытками (2 секунды)
 
-// Функция для загрузки данных
-async function loadReferralData() {
-	console.log('🔄 Загрузка данных рефералов...');
+// Функция для загрузки данных с retry механизмом
+async function loadReferralData(retryCount = 0) {
+	console.log(`🔄 Загрузка данных рефералов... (попытка ${retryCount + 1}/${MAX_RETRIES + 1})`);
 
 	try {
 		// Проверяем, не слишком ли часто делаем запросы
@@ -580,7 +582,25 @@ async function loadReferralData() {
 		};
 
 		console.log('🔑 Отправка запроса с API ключом...');
-		const response = await fetch(apiUrl, { headers });
+		
+		// Добавляем таймаут для запроса (60 секунд)
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 60000);
+		
+		let response;
+		try {
+			response = await fetch(apiUrl, { 
+				headers,
+				signal: controller.signal
+			});
+			clearTimeout(timeoutId);
+		} catch (fetchError) {
+			clearTimeout(timeoutId);
+			if (fetchError.name === 'AbortError') {
+				throw new Error('Превышено время ожидания ответа сервера (60 секунд)');
+			}
+			throw fetchError;
+		}
 
 		console.log(`📡 Ответ сервера: ${response.status} ${response.statusText}`);
 
@@ -589,7 +609,11 @@ async function loadReferralData() {
 				console.log('⏳ Rate limit exceeded, waiting...');
 				// Ждем 5 секунд перед повторной попыткой
 				await new Promise(resolve => setTimeout(resolve, 5000));
-				return;
+				// Повторяем запрос
+				if (retryCount < MAX_RETRIES) {
+					return loadReferralData(retryCount + 1);
+				}
+				throw new Error('Превышен лимит запросов. Попробуйте позже.');
 			} else if (response.status === 401) {
 				console.error('🔒 Ошибка аутентификации: неверный API ключ');
 				document.getElementById('tableBody').innerHTML = `
@@ -600,6 +624,14 @@ async function loadReferralData() {
 					</tr>
 				`;
 				return;
+			} else if (response.status === 500) {
+				// Для ошибки 500 пробуем повторить запрос
+				if (retryCount < MAX_RETRIES) {
+					console.warn(`⚠️ Ошибка сервера (500), повторная попытка через ${RETRY_DELAY}ms...`);
+					await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
+					return loadReferralData(retryCount + 1);
+				}
+				throw new Error('Ошибка сервера: сервер временно недоступен. Попробуйте обновить страницу позже.');
 			}
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
@@ -631,10 +663,26 @@ async function loadReferralData() {
 		}
 	} catch (error) {
 		console.error('❌ Ошибка загрузки данных:', error);
+		
+		// Если это сетевая ошибка или ошибка 500, пробуем повторить
+		if (retryCount < MAX_RETRIES && (
+			error.message.includes('timeout') || 
+			error.message.includes('network') || 
+			error.message.includes('Failed to fetch') ||
+			error.message.includes('500')
+		)) {
+			console.warn(`⚠️ Повторная попытка загрузки через ${RETRY_DELAY * (retryCount + 1)}ms...`);
+			await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (retryCount + 1)));
+			return loadReferralData(retryCount + 1);
+		}
+		
+		// Показываем ошибку пользователю
+		const errorMessage = error.message || 'Неизвестная ошибка';
 		document.getElementById('tableBody').innerHTML = `
             <tr>
                 <td colspan="6" class="error">
-                    Ошибка загрузки данных: ${error.message}
+                    Ошибка загрузки данных: ${errorMessage}
+                    ${retryCount >= MAX_RETRIES ? '<br><small>Все попытки загрузки исчерпаны. Нажмите "Обновить" для повторной попытки.</small>' : ''}
                 </td>
             </tr>
         `;
