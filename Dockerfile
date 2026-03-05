@@ -10,19 +10,18 @@ COPY package*.json ./
 # Устанавливаем зависимости
 RUN npm ci --only=production && npm cache clean --force
 
+# Добавляем необходимые директории
+RUN mkdir -p ./logs ./public/css ./public/js
+
 # Копируем исходный код
 COPY . .
-
-# Создаем директории для логов и public
-RUN mkdir -p ./logs ./public/css ./public/js
 
 # Создаем пользователя для безопасности
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Создаем директории для логов
-RUN mkdir -p /app/logs && \
-    chown -R nodejs:nodejs /app
+# Устанавливаем права
+RUN chown -R nodejs:nodejs /app
 
 # Переключаемся на непривилегированного пользователя
 USER nodejs
