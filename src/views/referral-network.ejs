@@ -25,12 +25,16 @@
 					<span class="stat-value" id="totalReferrals">0</span>
 				</div>
 				<div class="stat-item">
-					<span class="stat-label">Активных:</span>
-					<span class="stat-value" id="activeReferrals">0</span>
+					<span class="stat-label">Зашли в клуб:</span>
+					<span class="stat-value" id="enteredClub">0</span>
 				</div>
 				<div class="stat-item">
-					<span class="stat-label">Неактивных:</span>
-					<span class="stat-value" id="inactiveReferrals" style="color: #ef4444;">0</span>
+					<span class="stat-label">В клубе:</span>
+					<span class="stat-value" id="inClub">0</span>
+				</div>
+				<div class="stat-item">
+					<span class="stat-label">Не продлились:</span>
+					<span class="stat-value" id="didNotRenew" style="color: #ef4444;">0</span>
 				</div>
 				<div class="stat-item">
 					<span class="stat-label">Уровней:</span>
@@ -67,12 +71,15 @@
 						<th>Никнейм реферала</th>
 						<th>Имя реферала</th>
 						<th>Никнейм пригласителя</th>
-						<th>Активность в канале</th>
+						<th>В клубе</th>
+						<th>Срок подписки</th>
+						<th>Отзывы</th>
+						<th>Приглашения</th>
 					</tr>
 				</thead>
 				<tbody id="tableBody">
 					<tr>
-						<td colspan="6" class="loading">
+						<td colspan="9" class="loading">
 							<div class="loading-spinner"></div>
 							Загрузка данных...
 						</td>

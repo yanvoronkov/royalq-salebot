@@ -1,5 +1,6 @@
 // src/controllers/referal.controller.js
 import referalService from '../services/referal.service.js';
+import n8nService from '../services/n8n.service.js';
 
 class ReferalController {
 
@@ -169,10 +170,10 @@ class ReferalController {
 	async getAllReferralsTree(req, res, next) {
 		const startTime = Date.now();
 		try {
-			console.log('📊 Начало загрузки дерева всех рефералов...');
+			console.log('📊 Начало загрузки дерева всех рефералов через n8n...');
 			
 			// Получаем дерево всех рефералов
-			const referralTrees = await referalService.getAllReferralsTree();
+			const referralTrees = await n8nService.getAllReferralsTree();
 
 			const executionTime = Date.now() - startTime;
 			console.log(`✅ getAllReferralsTree завершено за ${executionTime}ms, возвращено ${referralTrees.length} корневых рефералов`);
@@ -222,7 +223,7 @@ class ReferalController {
 	async getActivityStats(req, res, next) {
 		try {
 			// Получаем статистику активности
-			const activityStats = await referalService.getActivityStats();
+			const activityStats = await n8nService.getActivityStats();
 
 			res.status(200).json({
 				status: true,
@@ -266,10 +267,10 @@ class ReferalController {
 		const startTime = Date.now();
 		try {
 			const referalId = req.params.referalId;
-			console.log(`📊 Начало загрузки дерева рефералов для пользователя: ${referalId}`);
+			console.log(`📊 Начало загрузки дерева рефералов для пользователя через n8n: ${referalId}`);
 
 			// Получаем дерево рефералов для конкретного пользователя
-			const referralTree = await referalService.getReferalTree(referalId);
+			const referralTree = await n8nService.getUserReferralsTree(referalId);
 
 			const executionTime = Date.now() - startTime;
 			console.log(`✅ getUserReferralsTree завершено за ${executionTime}ms для пользователя ${referalId}`);
@@ -322,7 +323,7 @@ class ReferalController {
 			const referalId = req.params.referalId;
 
 			// Получаем статистику активности для конкретного пользователя
-			const activityStats = await referalService.getUserActivityStats(referalId);
+			const activityStats = await n8nService.getUserActivityStats(referalId);
 
 			res.status(200).json({
 				status: true,

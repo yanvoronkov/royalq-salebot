@@ -30,7 +30,20 @@ function calculateHorizontalLinePosition(level) {
 // Функция для форматирования даты
 function formatDate(dateString) {
 	if (!dateString) return '—';
+	
+	// Если дата приходит из Google Sheets (формат DD.MM.YYYY или D.M.YYYY)
+	if (typeof dateString === 'string') {
+		const match = dateString.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+		if (match) {
+			const day = match[1].padStart(2, '0');
+			const month = match[2].padStart(2, '0');
+			return `${day}.${month}.${match[3]}`;
+		}
+	}
+
 	const date = new Date(dateString);
+	if (isNaN(date.getTime())) return dateString; // Если не получилось распознать
+
 	return date.toLocaleDateString('ru-RU', {
 		year: 'numeric',
 		month: '2-digit',
@@ -62,7 +75,10 @@ function createTableRow(item) {
             <td>${item.referal_nickname || '—'}</td>
             <td>${item.referal_name || '—'}</td>
             <td>${item.referer_nickname || '—'}</td>
-            <td>${item.channel_activity || 'Неактивен'}</td>
+            <td>${item.club_active || '—'}</td>
+            <td>${item.end_sub || '—'}</td>
+            <td>${item.review_count || 0}</td>
+            <td>${item.invitation_count || 0}</td>
         </tr>
     `;
 }
@@ -298,7 +314,7 @@ function renderTable(data = null) {
 	if (dataToRender.length === 0) {
 		tableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="error">
+                <td colspan="9" class="error">
                     Нет данных для отображения
                 </td>
             </tr>
@@ -340,35 +356,29 @@ function renderTable(data = null) {
 // Функция для расчета статистики активности по таблице
 function calculateActivityStats() {
 	if (!referralData || referralData.length === 0) {
-		return { active: 0, inactive: 0 };
+		return { enteredClub: 0, inClub: 0, didNotRenew: 0 };
 	}
 
+	let enteredCount = 0;
 	let activeCount = 0;
 	let inactiveCount = 0;
 
 	referralData.forEach(item => {
-		// Улучшенная логика определения активности:
-		// 1. Есть никнейм И активность в канале (более строгий критерий)
-		// 2. ИЛИ есть потомки (показатель активности в реферальной программе)
-		const hasNickname = item.referal_nickname && item.referal_nickname.trim() !== '';
-		const hasChannelActivity = item.channel_activity &&
-			item.channel_activity !== 'Неактивен' &&
-			item.channel_activity !== '—' &&
-			item.channel_activity.trim() !== '';
-		const hasChildren = item.totalReferals && item.totalReferals > 0;
-
-		// Считаем активным, если:
-		// - Есть никнейм И активность в канале (полная активность)
-		// - ИЛИ есть потомки (активность в реферальной программе)
-		if ((hasNickname && hasChannelActivity) || hasChildren) {
+		const clubActive = item.club_active;
+		
+		if (clubActive === 'Да') {
 			activeCount++;
-		} else {
+			enteredCount++; // Зашли в клуб
+		} else if (clubActive === 'Нет') {
 			inactiveCount++;
+			enteredCount++; // Зашли в клуб
+		} else if (clubActive && clubActive !== '—' && clubActive.trim() !== '') {
+			enteredCount++; // Тоже "Зашли в клуб", если поле не пустое
 		}
 	});
 
-	console.log(`📊 Расчет активности: ${activeCount} активных, ${inactiveCount} неактивных из ${referralData.length} всего`);
-	return { active: activeCount, inactive: inactiveCount };
+	console.log(`📊 Расчет активности: ${enteredCount} зашли в клуб, ${activeCount} в клубе, ${inactiveCount} не продлились из ${referralData.length} всего`);
+	return { enteredClub: enteredCount, inClub: activeCount, didNotRenew: inactiveCount };
 }
 
 // Функция для обновления статистики
@@ -387,17 +397,28 @@ function updateStats() {
 		const maxLevelsCount = referralData.length > 0 ? Math.max(...referralData.map(item => item.level)) + 1 : 0;
 
 		// Находим последнюю дату регистрации
+		const parseCustomDate = (dateStr) => {
+			if (typeof dateStr === 'string') {
+				const match = dateStr.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+				if (match) {
+					return new Date(match[3], match[2] - 1, match[1]).getTime();
+				}
+			}
+			return new Date(dateStr).getTime();
+		};
+
 		const lastRegDate = referralData
 			.filter(item => item.reg_date)
-			.sort((a, b) => new Date(b.reg_date) - new Date(a.reg_date))[0];
+			.sort((a, b) => parseCustomDate(b.reg_date) - parseCustomDate(a.reg_date))[0];
 
 		// Рассчитываем активность по таблице
 		const activityStats = calculateActivityStats();
 
 		// Обновляем DOM элементы
 		document.getElementById('totalReferrals').textContent = totalReferralsCount;
-		document.getElementById('activeReferrals').textContent = activityStats.active;
-		document.getElementById('inactiveReferrals').textContent = activityStats.inactive;
+		document.getElementById('enteredClub').textContent = activityStats.enteredClub;
+		document.getElementById('inClub').textContent = activityStats.inClub;
+		document.getElementById('didNotRenew').textContent = activityStats.didNotRenew;
 		document.getElementById('maxLevels').textContent = maxLevelsCount;
 		document.getElementById('lastRegistration').textContent = lastRegDate ? formatDate(lastRegDate.reg_date) : '—';
 
@@ -406,8 +427,9 @@ function updateStats() {
 
 		console.log('✅ Статистика обновлена:', {
 			total: totalReferralsCount,
-			active: activityStats.active,
-			inactive: activityStats.inactive,
+			enteredClub: activityStats.enteredClub,
+			inClub: activityStats.inClub,
+			didNotRenew: activityStats.didNotRenew,
 			levels: maxLevelsCount,
 			lastReg: lastRegDate ? formatDate(lastRegDate.reg_date) : '—'
 		});
@@ -417,8 +439,9 @@ function updateStats() {
 
 		// Fallback: показываем базовую статистику
 		document.getElementById('totalReferrals').textContent = referralData.length;
-		document.getElementById('activeReferrals').textContent = '—';
-		document.getElementById('inactiveReferrals').textContent = '—';
+		document.getElementById('enteredClub').textContent = '—';
+		document.getElementById('inClub').textContent = '—';
+		document.getElementById('didNotRenew').textContent = '—';
 		document.getElementById('maxLevels').textContent = '—';
 		document.getElementById('lastRegistration').textContent = '—';
 
@@ -448,7 +471,8 @@ function searchReferrals(searchTerm) {
 			item.referal_nickname,
 			item.referer_nickname,
 			item.referal_name,
-			item.channel_activity,
+			item.club_active,
+			item.end_sub,
 			formatDate(item.reg_date)
 		];
 
@@ -567,7 +591,7 @@ async function loadReferralData(retryCount = 0) {
 			console.error('❌ API_READONLY_KEY не найден в мета-тегах');
 			document.getElementById('tableBody').innerHTML = `
 				<tr>
-					<td colspan="6" class="error">
+					<td colspan="9" class="error">
 						Ошибка конфигурации: API ключ не найден
 					</td>
 				</tr>
@@ -618,7 +642,7 @@ async function loadReferralData(retryCount = 0) {
 				console.error('🔒 Ошибка аутентификации: неверный API ключ');
 				document.getElementById('tableBody').innerHTML = `
 					<tr>
-						<td colspan="6" class="error">
+						<td colspan="9" class="error">
 							Ошибка аутентификации: проверьте API ключ
 						</td>
 					</tr>
@@ -653,7 +677,7 @@ async function loadReferralData(retryCount = 0) {
 			console.log('📭 Нет данных для отображения');
 			document.getElementById('tableBody').innerHTML = `
                 <tr>
-                    <td colspan="6" class="error">
+                    <td colspan="9" class="error">
                         Нет данных для отображения
                     </td>
                 </tr>
@@ -680,7 +704,7 @@ async function loadReferralData(retryCount = 0) {
 		const errorMessage = error.message || 'Неизвестная ошибка';
 		document.getElementById('tableBody').innerHTML = `
             <tr>
-                <td colspan="6" class="error">
+                <td colspan="9" class="error">
                     Ошибка загрузки данных: ${errorMessage}
                     ${retryCount >= MAX_RETRIES ? '<br><small>Все попытки загрузки исчерпаны. Нажмите "Обновить" для повторной попытки.</small>' : ''}
                 </td>
@@ -717,7 +741,7 @@ async function refreshTable() {
 		// Показываем индикатор загрузки
 		document.getElementById('tableBody').innerHTML = `
 			<tr>
-				<td colspan="6" class="loading">
+				<td colspan="9" class="loading">
 					<div class="loading-spinner"></div>
 					Обновление данных...
 				</td>
@@ -733,7 +757,7 @@ async function refreshTable() {
 		console.error('❌ Ошибка обновления данных:', error);
 		document.getElementById('tableBody').innerHTML = `
 			<tr>
-				<td colspan="6" class="error">
+				<td colspan="9" class="error">
 					Ошибка обновления данных: ${error.message}
 				</td>
 			</tr>

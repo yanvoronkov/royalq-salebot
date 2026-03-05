@@ -14,5 +14,6 @@ router.get('/api/readonly/referrals/:referalId/tree', apiRateLimit, apiAuth, ref
 
 // Веб-интерфейс только для чтения - ЗАЩИЩЕН
 router.get('/readonly', apiRateLimit, apiAuth, referalController.getReferralNetwork);
+router.get('/readonly/:referalId', apiRateLimit, apiAuth, referalController.getUserReferralNetwork);
 
 export default router;
