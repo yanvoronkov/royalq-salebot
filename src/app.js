@@ -14,7 +14,7 @@ import { URL } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import databaseConfig from "./config/database.config.js";
+// import databaseConfig from "./config/database.config.js";
 import errorHandler from "./utils/error-handler.js";
 import { webRateLimit } from "./middleware/rate-limiter.js";
 import { monitorRequests, getStats } from "./middleware/request-monitor.js";
@@ -83,14 +83,14 @@ app.use("/", readonlyRoutes);
 // Обработчик ошибок
 app.use(errorHandler);
 
-// Подключение к базе данных при запуске приложения
-databaseConfig
-  .connect()
-  .then(() => {
-    console.log("Database connection initialized.");
-  })
-  .catch((err) => {
-    console.error("Failed to initialize database connection:", err);
-  });
+// Подключение к базе данных отключено (Используем Google Таблицы/n8n)
+// databaseConfig
+//   .connect()
+//   .then(() => {
+//     console.log("Database connection initialized.");
+//   })
+//   .catch((err) => {
+//     console.error("Failed to initialize database connection:", err);
+//   });
 
 export default app;
